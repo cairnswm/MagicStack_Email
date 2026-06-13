@@ -85,4 +85,30 @@ export async function fetchTenant(tenantId: string, bearerToken?: string): Promi
   return body;
 }
 
-export default { validateToken, fetchTenant, getUserJwt };
+export async function fetchSecret(tenantId: string, secretName: string, apiKey: string, hostname: string, bearerToken?: string): Promise<{ name: string; value: string } | null> {
+  if (!AUTH_API) throw new Error('MAGICSTACK_AUTH_API is not configured');
+  const url = `${AUTH_API.replace(/\/$/, '')}/tenant/secret/${encodeURIComponent(secretName)}`;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Tenant-ID': tenantId,
+    'X-APIKEY': apiKey,
+    'X-Hostname': hostname,
+  };
+
+  if (bearerToken) headers.Authorization = bearerToken;
+
+  const fetchFn = getFetch();
+
+  const res = await fetchFn(url, { method: 'GET', headers });
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Fetch secret failed: ${res.status} ${text}`);
+  }
+
+  const body = (await res.json()) as { name: string; value: string };
+  return body;
+}
+
+export default { validateToken, fetchTenant, fetchSecret, getUserJwt };
