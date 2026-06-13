@@ -80,4 +80,25 @@ router.get('/setting/:name', async (req: Request, res: Response) => {
   }
 });
 
+
+// GET /tenant/secret/:name - retrieve a named secret from the Auth/Tenant Service
+// X-APIKEY and X-Hostname are forwarded so the Auth/Tenant Service can authorise access.
+router.get('/secret/:name', async (req: Request, res: Response) => {
+  try {
+    const name = req.params.name as string;
+    if (!name) return res.status(400).json(errorResponse('secret name is required in path'));
+
+    const tenantId = getTenantId(req);
+    const apiKey = (req as any).apiKey as string;
+    const hostname = (req as any).callerHostname as string;
+    const authHeader = req.header('authorization') || '';
+
+    const secret = await authClient.fetchSecret(tenantId, name, apiKey, hostname, authHeader || undefined);
+    if (secret === null) return res.status(404).json(errorResponse(`Secret '${name}' not found for tenant ${tenantId}`));
+    res.json({ name: secret.name, value: secret.value });
+  } catch (err) {
+    res.status(500).json(errorResponse(err instanceof Error ? err.message : 'Unknown error'));
+  }
+});
+
 export default router;

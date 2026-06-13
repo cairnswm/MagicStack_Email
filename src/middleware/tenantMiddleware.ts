@@ -12,6 +12,26 @@ interface TenantUtils {
 }
 
 export default function tenantMiddleware(req: Request, res: Response, next: NextFunction): void {
+  // Enforce the three required headers on every request
+  const tenantId = req.header('x-tenant-id') || req.header('X-Tenant-ID') || '';
+  const apiKey = req.header('x-apikey') || req.header('X-APIKEY') || '';
+  const callerHostname = req.header('x-hostname') || req.header('X-Hostname') || '';
+
+  const missing = [
+    !tenantId ? 'X-Tenant-ID' : null,
+    !apiKey ? 'X-APIKEY' : null,
+    !callerHostname ? 'X-Hostname' : null,
+  ].filter(Boolean) as string[];
+
+  if (missing.length > 0) {
+    res.status(400).json({ error: { message: `Missing required headers: ${missing.join(', ')}` } });
+    return;
+  }
+
+  // Expose on request for downstream handlers
+  (req as any).apiKey = apiKey;
+  (req as any).callerHostname = callerHostname;
+
   const requestId = req.header('x-request-id') || generateRequestId();
   (req as any).requestId = requestId;
   requestStorage.run({ requestId }, () => {
