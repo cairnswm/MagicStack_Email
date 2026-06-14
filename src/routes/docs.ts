@@ -115,10 +115,13 @@ router.get('/', (_req: Request, res: Response) => {
         <table class="data-table">
           <thead><tr><th>Property</th><th>Required</th><th>Values</th><th>Purpose</th></tr></thead>
           <tbody>
-            <tr><td><code>email_provider</code></td><td>Yes</td><td><code>resend</code> | <code>sendgrid</code></td><td>Delivery provider</td></tr>
+            <tr><td><code>email_provider</code></td><td>Yes</td><td><code>resend</code> | <code>sendgrid</code> | <code>smtp</code></td><td>Delivery provider</td></tr>
             <tr><td><code>email_delivery_mode</code></td><td>Yes</td><td><code>sync</code> | <code>async</code></td><td><code>sync</code> sends immediately; <code>async</code> queues</td></tr>
             <tr><td><code>sender_email</code></td><td>Yes</td><td>email address</td><td>From address shown to recipients</td></tr>
             <tr><td><code>sender_name</code></td><td>No</td><td>display name</td><td>Display name next to From address</td></tr>
+            <tr><td><code>smtp_host</code></td><td>smtp only</td><td>hostname</td><td>SMTP server hostname</td></tr>
+            <tr><td><code>smtp_port</code></td><td>smtp only</td><td>number</td><td>SMTP server port (e.g. 465 or 587)</td></tr>
+            <tr><td><code>smtp_username</code></td><td>smtp only</td><td>email address</td><td>SMTP authentication username</td></tr>
           </tbody>
         </table>
       </section>
@@ -129,6 +132,7 @@ router.get('/', (_req: Request, res: Response) => {
           <tbody>
             <tr><td>Resend</td><td><code>resend_api_key</code></td></tr>
             <tr><td>SendGrid</td><td><code>sendgrid_api_key</code></td></tr>
+            <tr><td>SMTP</td><td><code>smtp</code> (password)</td></tr>
           </tbody>
         </table>
         <h3>Recipient formats</h3>
