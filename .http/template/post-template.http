@@ -1,0 +1,24 @@
+# Create Template
+# Description: Creates a new email template for the tenant.
+# Required fields: code, name, subjectTemplate, htmlTemplate.
+# Supports {{key}} placeholders in subjectTemplate and htmlTemplate for dynamic rendering.
+
+@baseUrl = http://localhost:3097
+@tenantId = f63421a5-f5b2-11f0-937d-1a220d8ac2c9
+@apiKey = your-api-key
+@hostname = localhost
+
+### Create template
+POST {{baseUrl}}/template
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "code": "welcome-email",
+  "name": "Welcome Email",
+  "description": "Sent to new users on registration",
+  "subjectTemplate": "Welcome to {{productName}}, {{firstName}}!",
+  "htmlTemplate": "<h1>Hello {{firstName}}!</h1><p>Welcome to {{productName}}.</p>"
+}

@@ -1,0 +1,14 @@
+# List Templates
+# Description: Returns all email templates for the tenant (id, code, name, isActive).
+
+@baseUrl = http://localhost:3097
+@tenantId = f63421a5-f5b2-11f0-937d-1a220d8ac2c9
+@apiKey = your-api-key
+@hostname = localhost
+
+### Get all templates
+GET {{baseUrl}}/template
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+Accept: application/json

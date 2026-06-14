@@ -1,0 +1,31 @@
+# Send Email via Template
+# Description: Loads a tenant-scoped template by templateCode, renders {{key}} placeholders
+# from the parameters map, and sends the email.
+# Creates email, email_recipient, email_template_render, and email_event records.
+
+@baseUrl = http://localhost:3097
+@tenantId = f63421a5-f5b2-11f0-937d-1a220d8ac2c9
+@apiKey = your-api-key
+@hostname = localhost
+@templateCode = welcome-email
+
+### Send email via template
+POST {{baseUrl}}/send/{{templateCode}}
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "to": [
+    { "emailAddress": "recipient@example.com" }
+  ],
+  "cc": [],
+  "bcc": [],
+  "parameters": {
+    "firstName": "Alice",
+    "productName": "MagicStack"
+  },
+  "attachments": [],
+  "images": []
+}

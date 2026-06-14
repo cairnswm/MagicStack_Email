@@ -1,0 +1,37 @@
+# Get Email Logs (paginated list)
+# Description: Returns a paginated list of emails for the tenant.
+# Supports optional filters: status, templateCode, fromDate, toDate.
+# URL tenantId must match the X-Tenant-ID header.
+
+@baseUrl = http://localhost:3097
+@tenantId = f63421a5-f5b2-11f0-937d-1a220d8ac2c9
+@apiKey = your-api-key
+@hostname = localhost
+
+### Get email logs (all)
+GET {{baseUrl}}/logs/{{tenantId}}/email?page=1&pageSize=20
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+Accept: application/json
+
+### Get email logs filtered by status
+GET {{baseUrl}}/logs/{{tenantId}}/email?status=sent&page=1&pageSize=20
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+Accept: application/json
+
+### Get email logs filtered by template code
+GET {{baseUrl}}/logs/{{tenantId}}/email?templateCode=welcome-email&page=1&pageSize=20
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+Accept: application/json
+
+### Get email logs filtered by date range
+GET {{baseUrl}}/logs/{{tenantId}}/email?fromDate=2025-01-01&toDate=2025-12-31&page=1&pageSize=20
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+Accept: application/json
