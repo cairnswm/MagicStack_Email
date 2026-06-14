@@ -11,7 +11,25 @@ interface TenantUtils {
   refresh: () => Promise<void>;
 }
 
+const basePath = (process.env.BASE_PATH || '').replace(/\/$/, '');
+const OPEN_PATHS = new Set([
+  basePath || '/',
+  `${basePath}/`,
+  `${basePath}/health`,
+  `${basePath}/db/health`,
+]);
+// Any path that starts with one of these prefixes is also open (no headers required)
+const OPEN_PREFIXES = [`${basePath}/docs`];
+
 export default function tenantMiddleware(req: Request, res: Response, next: NextFunction): void {
+  // Skip header enforcement for open/health/docs paths
+  if (OPEN_PATHS.has(req.path) || OPEN_PREFIXES.some(p => req.path.startsWith(p))) {
+    const requestId = req.header('x-request-id') || generateRequestId();
+    (req as any).requestId = requestId;
+    requestStorage.run({ requestId }, () => next());
+    return;
+  }
+
   // Enforce the three required headers on every request
   const tenantId = req.header('x-tenant-id') || req.header('X-Tenant-ID') || '';
   const apiKey = req.header('x-apikey') || req.header('X-APIKEY') || '';

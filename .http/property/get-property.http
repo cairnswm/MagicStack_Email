@@ -3,7 +3,7 @@
 
 # Alternative using header
 ### Get all properties (header)
-GET http://localhost:3097/tenant/property
+GET http://localhost:3076/tenant/property
 X-Tenant-ID: d2c5b2f0-f5c7-11f0-937d-1a220d8ac2c9
 Accept: application/json
 Authorization: Bearer eyJ..._Q5o

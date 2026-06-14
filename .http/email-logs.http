@@ -1,0 +1,86 @@
+### Variables
+@baseUrl = http://localhost:3076
+@tenantId = 523789bc-67a6-11f1-8237-00505661e513
+@apiKey = your-api-key-here
+@hostname = localhost
+@emailCode = em_abc123def456
+
+# ─────────────────────────────────────────────
+# GET /logs/:tenantId/email  —  List email log
+# ─────────────────────────────────────────────
+
+### List all emails (default page)
+GET {{baseUrl}}/logs/{{tenantId}}/email
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+###
+
+### List emails — page 2 with 25 per page
+GET {{baseUrl}}/logs/{{tenantId}}/email?page=2&pageSize=25
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+###
+
+### Filter by status: sent
+GET {{baseUrl}}/logs/{{tenantId}}/email?status=sent
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+###
+
+### Filter by status: failed
+GET {{baseUrl}}/logs/{{tenantId}}/email?status=failed
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+###
+
+### Filter by status: queued
+GET {{baseUrl}}/logs/{{tenantId}}/email?status=queued
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+###
+
+### Filter by template code
+GET {{baseUrl}}/logs/{{tenantId}}/email?templateCode=welcome-email
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+###
+
+### Filter by date range
+GET {{baseUrl}}/logs/{{tenantId}}/email?fromDate=2026-06-01T00:00:00Z&toDate=2026-06-14T23:59:59Z
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+###
+
+### Combined filter — failed emails from a specific template this month
+GET {{baseUrl}}/logs/{{tenantId}}/email?status=failed&templateCode=invoice-template&fromDate=2026-06-01T00:00:00Z&pageSize=50
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+# ─────────────────────────────────────────────
+# GET /logs/:tenantId/email/:emailCode  —  Email details
+# ─────────────────────────────────────────────
+
+###
+
+### Get full details for a single email
+GET {{baseUrl}}/logs/{{tenantId}}/email/{{emailCode}}
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+###

@@ -2,7 +2,7 @@ const AUTH_API = process.env.MAGICSTACK_AUTH_API || '';
 import { Request } from 'express';
 import { getRequestId, log } from './requestContext';
 
-function getFetch() {
+export function getFetch() {
   const f = (globalThis as any).fetch as typeof globalThis.fetch;
   if (!f) throw new Error('Global fetch is not available in this runtime');
 

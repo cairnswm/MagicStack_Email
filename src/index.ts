@@ -11,10 +11,11 @@ import templateRouter from './routes/template';
 import logsRouter from './routes/logs';
 
 const app = express();
-const PORT = process.env.PORT || 3097;
+const PORT = process.env.PORT || 3076;
 const BASE_PATH = (process.env.BASE_PATH || '/').replace(/\/$/, '');
 
 app.use(express.json());
+app.use(express.static('public'));
 
 // Attach tenant / auth helpers to every request
 app.use(tenantMiddleware as any);
@@ -83,7 +84,7 @@ app.get(`${BASE_PATH}/health`, (req: Request, res: Response) => {
   }
 
   res.json({
-    service: 'sample',
+    service: 'email',
     status: 'ok',
     deployed_at: deployedAtLocal,
   });
