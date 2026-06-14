@@ -10,7 +10,7 @@ router.get('/health', async (req: Request, res: Response) => {
     });
 
     res.json({
-      service: 'sample',
+      service: 'email',
       status: 'ok',
       deployed_at: process.env.DEPLOYED_AT || null,
       message: 'Database connection successful',
@@ -19,7 +19,7 @@ router.get('/health', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Database health check failed:', error);
     res.status(503).json({
-      service: 'sample',
+      service: 'email',
       status: 'error',
       message: 'Database connection failed',
       error: error instanceof Error ? error.message : 'Unknown error',

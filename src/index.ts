@@ -4,14 +4,15 @@ import dbRouter from './routes/db';
 import tenantMiddleware from './middleware/tenantMiddleware';
 import tenantRouter from './routes/tenant';
 import sampleRouter from './routes/sample';
-import paymentRouter from './routes/payment';
-import docsRouter from './routes/docs';
+import emailRouter from './routes/email';
+import docsEmailRouter from './routes/docsEmail';
 
 const app = express();
 const PORT = process.env.PORT || 3097;
 const BASE_PATH = (process.env.BASE_PATH || '/').replace(/\/$/, '');
 
 app.use(express.json());
+app.use(express.static('public'));
 
 // Attach tenant / auth helpers to every request
 app.use(tenantMiddleware as any);
@@ -57,9 +58,8 @@ app.use((req: Request, res: Response, next) => {
 app.use(`${BASE_PATH}/db`, dbRouter);
 app.use(`${BASE_PATH}/tenant`, tenantRouter);
 app.use(`${BASE_PATH}/sample`, sampleRouter);
-app.use(`${BASE_PATH}/payment`, paymentRouter);
-app.use(BASE_PATH || '/', docsRouter);
-app.use(`${BASE_PATH}/docs`, docsRouter);
+app.use(BASE_PATH || '/', emailRouter);
+app.use(BASE_PATH || '/', docsEmailRouter);
 
 app.get(`${BASE_PATH}/health`, (req: Request, res: Response) => {
   const deployedAtEnv = process.env.DEPLOYED_AT;
@@ -77,7 +77,7 @@ app.get(`${BASE_PATH}/health`, (req: Request, res: Response) => {
   }
 
   res.json({
-    service: 'sample',
+    service: 'email',
     status: 'ok',
     deployed_at: deployedAtLocal,
   });
