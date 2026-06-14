@@ -7,7 +7,7 @@ interface RequestContext {
 export const requestStorage = new AsyncLocalStorage<RequestContext>();
 
 export function generateRequestId(): string {
-  const port = process.env.PORT || '3097';
+  const port = process.env.PORT || '3076';
   return `${port}-${Date.now()}`;
 }
 

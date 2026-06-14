@@ -8,7 +8,7 @@ import emailRouter from './routes/email';
 import docsEmailRouter from './routes/docsEmail';
 
 const app = express();
-const PORT = process.env.PORT || 3097;
+const PORT = process.env.PORT || 3076;
 const BASE_PATH = (process.env.BASE_PATH || '/').replace(/\/$/, '');
 
 app.use(express.json());

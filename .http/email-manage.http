@@ -1,0 +1,138 @@
+### Variables
+@baseUrl = http://localhost:3076
+@tenantId = 523789bc-67a6-11f1-8237-00505661e513
+@apiKey = your-api-key-here
+@hostname = localhost
+@templateCode = welcome-email
+
+# ─────────────────────────────────────────────
+# GET /template  —  List templates
+# ─────────────────────────────────────────────
+
+### List all templates for the tenant
+GET {{baseUrl}}/template
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+# ─────────────────────────────────────────────
+# GET /template/:code  —  Get a single template
+# ─────────────────────────────────────────────
+
+###
+
+### Get template by code
+GET {{baseUrl}}/template/{{templateCode}}
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+# ─────────────────────────────────────────────
+# POST /template  —  Create a template
+# ─────────────────────────────────────────────
+
+###
+
+### Create a new template
+POST {{baseUrl}}/template
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "code": "welcome-email",
+  "name": "Welcome Email",
+  "description": "Sent to new users after they register",
+  "subjectTemplate": "Welcome to our platform, {{firstName}}!",
+  "htmlTemplate": "<h1>Hi {{firstName}},</h1><p>Click <a href=\"{{activationLink}}\">here</a> to activate your account. This link expires in {{expiryHours}} hours.</p>"
+}
+
+###
+
+### Create an invoice template
+POST {{baseUrl}}/template
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "code": "invoice-template",
+  "name": "Invoice Email",
+  "description": "Sent to clients when an invoice is issued",
+  "subjectTemplate": "Invoice {{invoiceNumber}} — payment due {{dueDate}}",
+  "htmlTemplate": "<p>Dear customer,</p><p>Invoice <strong>{{invoiceNumber}}</strong> for <strong>$\u007b\u007bamount\u007d\u007d</strong> is due on {{dueDate}}.</p>"
+}
+
+# ─────────────────────────────────────────────
+# PUT /template/:code  —  Update a template
+# ─────────────────────────────────────────────
+
+###
+
+### Update template name and description
+PUT {{baseUrl}}/template/{{templateCode}}
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "name": "Welcome Email (Updated)",
+  "description": "Revised onboarding email for new users"
+}
+
+###
+
+### Update template subject and body
+PUT {{baseUrl}}/template/{{templateCode}}
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "subjectTemplate": "Welcome, {{firstName}} — get started today!",
+  "htmlTemplate": "<h1>Welcome {{firstName}}!</h1><p>Your account is ready. <a href=\"{{activationLink}}\">Activate now</a>.</p>"
+}
+
+###
+
+### Deactivate a template
+PUT {{baseUrl}}/template/{{templateCode}}
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "isActive": false
+}
+
+###
+
+### Reactivate a template
+PUT {{baseUrl}}/template/{{templateCode}}
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "isActive": true
+}
+
+# ─────────────────────────────────────────────
+# DELETE /template/:code  —  Delete a template
+# ─────────────────────────────────────────────
+
+###
+
+### Delete (soft-delete) a template
+DELETE {{baseUrl}}/template/{{templateCode}}
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+###
