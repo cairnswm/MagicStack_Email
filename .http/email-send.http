@@ -1,5 +1,6 @@
 ### Variables
 @baseUrl = http://localhost:3076
+@prodUrl = https://email.magicrunez.com
 @tenantId = 523789bc-67a6-11f1-8237-00505661e513
 @apiKey = c3bf5035-67b3-11f1-8237-00505661e513
 @hostname = localhost
@@ -25,7 +26,23 @@ X-Hostname: {{hostname}}
   "bcc": []
 }
 
-###
+### PRODUCTION SEND
+
+POST {{prodUrl}}/send
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "subject": "Hello from MagicRunez Email",
+  "htmlBody": "<h1>Hello!</h1><p>This is a test email.</p>",
+  "to": [
+    { "email": "cairnswm@gmail.com" }
+  ],
+  "cc": [],
+  "bcc": []
+}
 
 ### Send email with a userId recipient
 POST {{baseUrl}}/send
@@ -38,11 +55,25 @@ X-Hostname: {{hostname}}
   "subject": "Welcome to the platform",
   "htmlBody": "<p>Your account is ready.</p>",
   "to": [
-    { "userId": "user-abc123" }
+    { "userId": "44" }
   ]
 }
 
-###
+### PRODUCTION
+
+POST {{prodUrl}}/send
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "subject": "Welcome to the platform",
+  "htmlBody": "<p>Your account is ready.</p>",
+  "to": [
+    { "userId": "user-abc123" }
+  ]
+}
 
 ### Send email with an attachment (base64 upload)
 POST {{baseUrl}}/send

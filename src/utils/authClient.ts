@@ -148,6 +148,11 @@ export async function fetchUser(
   const fetchFn = getFetch();
   const res = await fetchFn(url, { method: 'GET', headers });
   if (res.status === 404) return null;
+  if (res.status === 400) {
+    const text = await res.text();
+    console.error(`fetchUser: invalid user id (${userId}) — ${text}`);
+    return null;
+  }
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Fetch user failed: ${res.status} ${text}`);

@@ -46,16 +46,27 @@ async function processSend(
   const providerName = await tenantUtils.getProperty('email_provider');
   const deliveryMode = (await tenantUtils.getProperty('email_delivery_mode')) || 'sync';
   const senderName = (await tenantUtils.getProperty('sender_name')) || '';
-  const senderEmail = (await tenantUtils.getProperty('sender_email')) || '';
 
   if (!providerName) {
     res.status(400).json(errorResponse('Tenant email_provider property is not configured'));
     return;
   }
 
-  if (!senderEmail) {
-    res.status(400).json(errorResponse('Tenant sender_email property is not configured'));
-    return;
+  // For SMTP the smtp_username is the sending address; for all other providers use sender_email property
+  let senderEmail: string;
+  if (providerName.toLowerCase() === 'smtp') {
+    const smtpUsername = await tenantUtils.getProperty('smtp_username');
+    if (!smtpUsername) {
+      res.status(400).json(errorResponse('Tenant smtp_username property is not configured'));
+      return;
+    }
+    senderEmail = smtpUsername;
+  } else {
+    senderEmail = (await tenantUtils.getProperty('sender_email')) || '';
+    if (!senderEmail) {
+      res.status(400).json(errorResponse('Tenant sender_email property is not configured'));
+      return;
+    }
   }
 
   const toRecipients = await resolveRecipients(tenantId, apiKey, callerHostname, body.to, 'to');
@@ -108,16 +119,14 @@ async function processSend(
       if (providerName.toLowerCase() === 'smtp') {
         const smtpHost = await tenantUtils.getProperty('smtp_host');
         const smtpPortStr = await tenantUtils.getProperty('smtp_port');
-        const smtpUsername = await tenantUtils.getProperty('smtp_username');
 
         if (!smtpHost) throw new Error('Tenant smtp_host property is not configured');
         if (!smtpPortStr) throw new Error('Tenant smtp_port property is not configured');
-        if (!smtpUsername) throw new Error('Tenant smtp_username property is not configured');
 
         providerSecret = await tenantUtils.getSecret('smtp');
         if (!providerSecret) throw new Error("Provider secret 'smtp' not found");
 
-        smtpConfig = { host: smtpHost, port: parseInt(smtpPortStr, 10), username: smtpUsername };
+        smtpConfig = { host: smtpHost, port: parseInt(smtpPortStr, 10), username: senderEmail };
       } else {
         providerSecret = await tenantUtils.getSecret(`${providerName}`);
         if (!providerSecret) throw new Error(`Provider secret '${providerName} (APIKEY)' not found`);
