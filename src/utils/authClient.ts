@@ -75,19 +75,27 @@ export async function fetchTenant(tenantId: string, bearerToken?: string): Promi
 
   const fetchFn = getFetch();
 
+  console.log(`[fetchTenant] GET ${url} (tenant: ${tenantId})`);
   const res = await fetchFn(url, { method: 'GET', headers });
+  const rawText = await res.text();
+  console.log(`[fetchTenant] response ${res.status} body: ${rawText}`);
+
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Fetch tenant failed: ${res.status} ${text}`);
+    throw new Error(`Fetch tenant failed: ${res.status} ${rawText}`);
   }
 
-  const body = (await res.json()) as TenantResponse;
+  let body: TenantResponse;
+  try {
+    body = JSON.parse(rawText) as TenantResponse;
+  } catch (e) {
+    throw new Error(`Fetch tenant returned non-JSON (status ${res.status}): ${rawText.slice(0, 200)}`);
+  }
   return body;
 }
 
 export async function fetchSecret(tenantId: string, secretName: string, apiKey: string, hostname: string, bearerToken?: string): Promise<{ name: string; value: string } | null> {
   if (!AUTH_API) throw new Error('MAGICSTACK_AUTH_API is not configured');
-  const url = `${AUTH_API.replace(/\/$/, '')}/tenant/secret/${encodeURIComponent(secretName)}`;
+  const url = `${AUTH_API.replace(/\/$/, '')}/tenant/secrets/${encodeURIComponent(secretName)}`;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -100,14 +108,22 @@ export async function fetchSecret(tenantId: string, secretName: string, apiKey: 
 
   const fetchFn = getFetch();
 
+  console.log(`[fetchSecret] GET ${url} (tenant: ${tenantId}, secret: ${secretName})`);
   const res = await fetchFn(url, { method: 'GET', headers });
+  const rawText = await res.text();
+  console.log(`[fetchSecret] response ${res.status} body: ${rawText}`);
+
   if (res.status === 404) return null;
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Fetch secret failed: ${res.status} ${text}`);
+    throw new Error(`Fetch secret failed: ${res.status} ${rawText}`);
   }
 
-  const body = (await res.json()) as { name: string; value: string };
+  let body: { name: string; value: string };
+  try {
+    body = JSON.parse(rawText) as { name: string; value: string };
+  } catch (e) {
+    throw new Error(`Fetch secret returned non-JSON (status ${res.status}): ${rawText.slice(0, 200)}`);
+  }
   return body;
 }
 

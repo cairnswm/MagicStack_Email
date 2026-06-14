@@ -1,0 +1,6 @@
+@tenantId = 523789bc-67a6-11f1-8237-00505661e513
+
+
+###
+GET https://auth.magicrunez.com/tenant/
+X-Tenant-ID: {{tenantId}}

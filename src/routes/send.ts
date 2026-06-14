@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import { withConnection } from '../utils/db';
 import { getTenantId } from '../utils/tenant';
 import { errorResponse, successResponse } from '../utils/formatters';
-import * as authClient from '../utils/authClient';
 import { SendEmailRequest, SendTemplateEmailRequest } from '../types/email';
 import {
   resolveRecipients,
@@ -44,10 +43,15 @@ async function processSend(
   const callerHostname = (req as any).callerHostname as string;
   const tenantUtils = (req as any).tenantUtils;
 
-  const providerName = (await tenantUtils.getProperty('email_provider')) || 'resend';
-  const deliveryMode = (await tenantUtils.getProperty('email_delivery_mode')) || 'async';
+  const providerName = await tenantUtils.getProperty('email_provider');
+  const deliveryMode = (await tenantUtils.getProperty('email_delivery_mode')) || 'sync';
   const senderName = (await tenantUtils.getProperty('sender_name')) || '';
   const senderEmail = (await tenantUtils.getProperty('sender_email')) || '';
+
+  if (!providerName) {
+    res.status(400).json(errorResponse('Tenant email_provider property is not configured'));
+    return;
+  }
 
   if (!senderEmail) {
     res.status(400).json(errorResponse('Tenant sender_email property is not configured'));
@@ -98,8 +102,8 @@ async function processSend(
 
   if (deliveryMode === 'sync') {
     try {
-      const providerSecret = await authClient.fetchSecret(tenantId, `${providerName}_api_key`, apiKey, callerHostname);
-      if (!providerSecret) throw new Error(`Provider secret '${providerName}_api_key' not found`);
+      const providerSecret = await tenantUtils.getSecret(`${providerName}`);
+      if (!providerSecret) throw new Error(`Provider secret '${providerName} (APIKEY)' not found`);
 
       const result = await sendViaProvider(providerName, providerSecret.value, {
         fromName: senderName,

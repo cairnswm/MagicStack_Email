@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as authClient from '../utils/authClient';
-import { requestStorage, generateRequestId } from '../utils/requestContext';
+import { requestStorage, generateRequestId, log } from '../utils/requestContext';
 
 interface TenantUtils {
   tenant?: any;
@@ -8,6 +8,7 @@ interface TenantUtils {
   settings?: Record<string, any>;
   getProperty: (name: string) => Promise<string | undefined>;
   getSetting: (name: string) => Promise<any>;
+  getSecret: (name: string) => Promise<string | undefined>;
   refresh: () => Promise<void>;
 }
 
@@ -60,6 +61,8 @@ export default function tenantMiddleware(req: Request, res: Response, next: Next
 async function initTenantContext(req: Request, _res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.header('authorization') || req.header('Authorization') || '';
   const tenantId = req.header('x-tenant-id') || req.header('X-Tenant-ID') || '';
+  const apiKey = (req as any).apiKey as string || '';
+  const callerHostname = (req as any).callerHostname as string || '';
 
   // Attach auth helpers
   (req as any).authClient = {
@@ -74,6 +77,7 @@ async function initTenantContext(req: Request, _res: Response, next: NextFunctio
     settings: {},
     getProperty: async (name: string) => undefined,
     getSetting: async (name: string) => undefined,
+    getSecret: async (name: string) => undefined,
     refresh: async () => {},
   };
 
@@ -84,12 +88,17 @@ async function initTenantContext(req: Request, _res: Response, next: NextFunctio
       tenantUtils.tenant = data.tenant;
       tenantUtils.properties = data.properties || [];
       tenantUtils.settings = data.settings || {};
+      log('info', `[tenantMiddleware] fetched ${tenantUtils.properties.length} properties for tenant ${tenantId}: ${tenantUtils.properties.map(p => p.name).join(', ')}`);
       tenantUtils.getProperty = async (name: string) => {
         const prop = (tenantUtils.properties || []).find(p => p.name === name);
         return prop ? prop.value : undefined;
       };
       tenantUtils.getSetting = async (name: string) => {
         return tenantUtils.settings ? tenantUtils.settings[name] : undefined;
+      };
+      tenantUtils.getSecret = async (name: string) => {
+        const secret = await authClient.fetchSecret(tenantId, name, apiKey, callerHostname, authHeader || undefined);
+        return secret?.value;
       };
       tenantUtils.refresh = async () => {
         const fresh = await authClient.fetchTenant(tenantId, authHeader);
@@ -98,8 +107,9 @@ async function initTenantContext(req: Request, _res: Response, next: NextFunctio
         tenantUtils.settings = fresh.settings || {};
       };
     } catch (err) {
-      // attach the error so routes can inspect if they want
-      (req as any).tenantFetchError = err;
+      console.error('[tenantMiddleware] fetchTenant failed for tenant', tenantId, ':', err);
+      next(err);
+      return;
     }
   }
 
