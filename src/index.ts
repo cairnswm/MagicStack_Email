@@ -4,8 +4,11 @@ import dbRouter from './routes/db';
 import tenantMiddleware from './middleware/tenantMiddleware';
 import tenantRouter from './routes/tenant';
 import sampleRouter from './routes/sample';
-import emailRouter from './routes/email';
-import docsEmailRouter from './routes/docsEmail';
+import paymentRouter from './routes/payment';
+import docsRouter from './routes/docs';
+import sendRouter from './routes/send';
+import templateRouter from './routes/template';
+import logsRouter from './routes/logs';
 
 const app = express();
 const PORT = process.env.PORT || 3076;
@@ -58,8 +61,12 @@ app.use((req: Request, res: Response, next) => {
 app.use(`${BASE_PATH}/db`, dbRouter);
 app.use(`${BASE_PATH}/tenant`, tenantRouter);
 app.use(`${BASE_PATH}/sample`, sampleRouter);
-app.use(BASE_PATH || '/', emailRouter);
-app.use(BASE_PATH || '/', docsEmailRouter);
+app.use(`${BASE_PATH}/payment`, paymentRouter);
+app.use(`${BASE_PATH}/send`, sendRouter);
+app.use(`${BASE_PATH}/template`, templateRouter);
+app.use(`${BASE_PATH}/logs`, logsRouter);
+app.use(BASE_PATH || '/', docsRouter);
+app.use(`${BASE_PATH}/docs`, docsRouter);
 
 app.get(`${BASE_PATH}/health`, (req: Request, res: Response) => {
   const deployedAtEnv = process.env.DEPLOYED_AT;
