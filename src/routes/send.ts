@@ -16,7 +16,7 @@ import {
   renderTemplate,
   generateEmailCode,
 } from '../services/emailService';
-import { sendViaProvider } from '../providers/emailProvider';
+import { sendViaProvider, SmtpConfig } from '../providers/emailProvider';
 
 const router = Router();
 
@@ -102,10 +102,28 @@ async function processSend(
 
   if (deliveryMode === 'sync') {
     try {
-      const providerSecret = await tenantUtils.getSecret(`${providerName}`);
-      if (!providerSecret) throw new Error(`Provider secret '${providerName} (APIKEY)' not found`);
+      let providerSecret: string | undefined;
+      let smtpConfig: SmtpConfig | undefined;
 
-      const result = await sendViaProvider(providerName, providerSecret.value, {
+      if (providerName.toLowerCase() === 'smtp') {
+        const smtpHost = await tenantUtils.getProperty('smtp_host');
+        const smtpPortStr = await tenantUtils.getProperty('smtp_port');
+        const smtpUsername = await tenantUtils.getProperty('smtp_username');
+
+        if (!smtpHost) throw new Error('Tenant smtp_host property is not configured');
+        if (!smtpPortStr) throw new Error('Tenant smtp_port property is not configured');
+        if (!smtpUsername) throw new Error('Tenant smtp_username property is not configured');
+
+        providerSecret = await tenantUtils.getSecret('smtp');
+        if (!providerSecret) throw new Error("Provider secret 'smtp' not found");
+
+        smtpConfig = { host: smtpHost, port: parseInt(smtpPortStr, 10), username: smtpUsername };
+      } else {
+        providerSecret = await tenantUtils.getSecret(`${providerName}`);
+        if (!providerSecret) throw new Error(`Provider secret '${providerName} (APIKEY)' not found`);
+      }
+
+      const result = await sendViaProvider(providerName, providerSecret, {
         fromName: senderName,
         fromEmail: senderEmail,
         toAddresses: toRecipients.map(r => r.emailAddress),
@@ -113,7 +131,7 @@ async function processSend(
         bccAddresses: bccRecipients.map(r => r.emailAddress),
         subject,
         htmlBody,
-      });
+      }, smtpConfig);
 
       await withConnection(async (conn) => {
         await updateEmailSent(conn, emailId, result.messageId, result.providerResponse);
