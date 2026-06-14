@@ -1,0 +1,15 @@
+# Delete Template (soft delete)
+# Description: Soft-deletes a template by setting is_active = 0.
+# The template record is retained for audit purposes.
+
+@baseUrl = http://localhost:3097
+@tenantId = f63421a5-f5b2-11f0-937d-1a220d8ac2c9
+@apiKey = your-api-key
+@hostname = localhost
+@templateCode = welcome-email
+
+### Delete (deactivate) template
+DELETE {{baseUrl}}/template/{{templateCode}}
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}

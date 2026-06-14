@@ -1,0 +1,16 @@
+# Get Email Detail
+# Description: Returns the full email record including recipients and events for the given emailCode.
+# URL tenantId must match the X-Tenant-ID header.
+
+@baseUrl = http://localhost:3097
+@tenantId = f63421a5-f5b2-11f0-937d-1a220d8ac2c9
+@apiKey = your-api-key
+@hostname = localhost
+@emailCode = replace-with-email-code
+
+### Get email detail by code
+GET {{baseUrl}}/logs/{{tenantId}}/email/{{emailCode}}
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+Accept: application/json

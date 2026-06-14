@@ -1,0 +1,24 @@
+# Update Template
+# Description: Updates one or more fields of an existing template for the tenant.
+# All body fields are optional; at least one must be provided.
+
+@baseUrl = http://localhost:3097
+@tenantId = f63421a5-f5b2-11f0-937d-1a220d8ac2c9
+@apiKey = your-api-key
+@hostname = localhost
+@templateCode = welcome-email
+
+### Update template
+PUT {{baseUrl}}/template/{{templateCode}}
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "name": "Welcome Email (Updated)",
+  "description": "Sent to new users on registration",
+  "subjectTemplate": "Welcome to {{productName}}, {{firstName}}!",
+  "htmlTemplate": "<h1>Hello {{firstName}}!</h1><p>Welcome to {{productName}}. We are glad you are here!</p>",
+  "isActive": true
+}

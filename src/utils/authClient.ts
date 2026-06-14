@@ -111,4 +111,32 @@ export async function fetchSecret(tenantId: string, secretName: string, apiKey: 
   return body;
 }
 
-export default { validateToken, fetchTenant, fetchSecret, getUserJwt };
+export async function fetchUser(
+  tenantId: string,
+  userId: string,
+  apiKey: string,
+  hostname: string,
+  bearerToken?: string,
+): Promise<{ email: string; displayName?: string } | null> {
+  if (!AUTH_API) throw new Error('MAGICSTACK_AUTH_API is not configured');
+  const url = `${AUTH_API.replace(/\/$/, '')}/user/${encodeURIComponent(userId)}`;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Tenant-ID': tenantId,
+    'X-APIKEY': apiKey,
+    'X-Hostname': hostname,
+  };
+  if (bearerToken) headers.Authorization = bearerToken;
+
+  const fetchFn = getFetch();
+  const res = await fetchFn(url, { method: 'GET', headers });
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Fetch user failed: ${res.status} ${text}`);
+  }
+  return res.json() as Promise<{ email: string; displayName?: string }>;
+}
+
+export default { validateToken, fetchTenant, fetchSecret, fetchUser, getUserJwt };

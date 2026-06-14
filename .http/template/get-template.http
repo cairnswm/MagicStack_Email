@@ -1,0 +1,16 @@
+# Get Template by Code
+# Description: Returns the full template record (including subjectTemplate and htmlTemplate)
+# for the given template code scoped to the tenant.
+
+@baseUrl = http://localhost:3097
+@tenantId = f63421a5-f5b2-11f0-937d-1a220d8ac2c9
+@apiKey = your-api-key
+@hostname = localhost
+@templateCode = welcome-email
+
+### Get template by code
+GET {{baseUrl}}/template/{{templateCode}}
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+Accept: application/json
