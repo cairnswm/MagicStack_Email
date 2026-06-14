@@ -19,7 +19,7 @@ X-Hostname: {{hostname}}
   "subject": "Welcome to MagicStack",
   "htmlBody": "<h1>Hello!</h1><p>Welcome to MagicStack.</p>",
   "to": [
-    { "emailAddress": "recipient@example.com" }
+    { "email": "recipient@example.com" }
   ],
   "cc": [],
   "bcc": [],

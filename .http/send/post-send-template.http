@@ -18,7 +18,7 @@ X-Hostname: {{hostname}}
 
 {
   "to": [
-    { "emailAddress": "recipient@example.com" }
+    { "email": "recipient@example.com" }
   ],
   "cc": [],
   "bcc": [],
