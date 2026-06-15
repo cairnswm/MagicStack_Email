@@ -108,39 +108,58 @@ router.get('/', (_req: Request, res: Response) => {
       <strong class="alert__title">Required headers</strong>
       <p>Every request must include <code>X-Tenant-ID</code>, <code>X-APIKEY</code>, and <code>X-Hostname</code>. Missing headers return <code>400</code>.</p>
     </div>
+    <section class="surface">
+      <h3>Common properties</h3>
+      <p>Set the following via the Auth/Tenant Service for all providers before sending email.</p>
+      <table class="data-table">
+        <thead><tr><th>Property</th><th>Required</th><th>Values</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>email_provider</code></td><td>Yes</td><td><code>resend</code> | <code>sendgrid</code> | <code>smtp</code></td><td>Delivery provider</td></tr>
+          <tr><td><code>email_delivery_mode</code></td><td>Yes</td><td><code>sync</code> | <code>async</code></td><td><code>sync</code> sends immediately; <code>async</code> queues</td></tr>
+          <tr><td><code>sender_email</code></td><td>Yes</td><td>email address</td><td>From address shown to recipients</td></tr>
+          <tr><td><code>sender_name</code></td><td>No</td><td>display name</td><td>Display name shown next to the From address</td></tr>
+        </tbody>
+      </table>
+    </section>
     <div class="two-column">
       <section class="surface">
-        <h3>Tenant properties</h3>
-        <p>Set the following via the Auth/Tenant Service before sending email.</p>
+        <h3>SMTP configuration</h3>
+        <p>Required when <code>email_provider</code> is <code>smtp</code>.</p>
         <table class="data-table">
-          <thead><tr><th>Property</th><th>Required</th><th>Values</th><th>Purpose</th></tr></thead>
+          <thead><tr><th>Key</th><th>Type</th><th>Purpose</th></tr></thead>
           <tbody>
-            <tr><td><code>email_provider</code></td><td>Yes</td><td><code>resend</code> | <code>sendgrid</code> | <code>smtp</code></td><td>Delivery provider</td></tr>
-            <tr><td><code>email_delivery_mode</code></td><td>Yes</td><td><code>sync</code> | <code>async</code></td><td><code>sync</code> sends immediately; <code>async</code> queues</td></tr>
-            <tr><td><code>sender_email</code></td><td>Yes</td><td>email address</td><td>From address shown to recipients</td></tr>
-            <tr><td><code>sender_name</code></td><td>No</td><td>display name</td><td>Display name next to From address</td></tr>
-            <tr><td><code>smtp_host</code></td><td>smtp only</td><td>hostname</td><td>SMTP server hostname</td></tr>
-            <tr><td><code>smtp_port</code></td><td>smtp only</td><td>number</td><td>SMTP server port (e.g. 465 or 587)</td></tr>
-            <tr><td><code>smtp_username</code></td><td>smtp only</td><td>email address</td><td>SMTP authentication username</td></tr>
+            <tr><td><code>smtp_host</code></td><td>property</td><td>SMTP server hostname</td></tr>
+            <tr><td><code>smtp_port</code></td><td>property</td><td>Server port — <code>465</code> (TLS) or <code>587</code> (STARTTLS)</td></tr>
+            <tr><td><code>smtp_username</code></td><td>property</td><td>Authentication username (usually the From address)</td></tr>
+            <tr><td><code>smtp</code></td><td>secret</td><td>SMTP account password</td></tr>
           </tbody>
         </table>
       </section>
       <section class="surface">
-        <h3>Provider secrets</h3>
+        <h3>Resend configuration</h3>
+        <p>Required when <code>email_provider</code> is <code>resend</code>.</p>
         <table class="data-table">
-          <thead><tr><th>Provider</th><th>Secret name</th></tr></thead>
+          <thead><tr><th>Key</th><th>Type</th><th>Purpose</th></tr></thead>
           <tbody>
-            <tr><td>Resend</td><td><code>resend_api_key</code></td></tr>
-            <tr><td>SendGrid</td><td><code>sendgrid_api_key</code></td></tr>
-            <tr><td>SMTP</td><td><code>smtp</code> (password)</td></tr>
+            <tr><td><code>resend_api_key</code></td><td>secret</td><td>Resend API key from the Resend dashboard</td></tr>
           </tbody>
         </table>
-        <h3>Recipient formats</h3>
-        <p>Specify an email address directly, or a user ID resolved via the Auth Service.</p>
-        <pre class="code-block">{ "email": "alice@example.com" }
-{ "userId": "user-uuid-here" }</pre>
+        <h3>SendGrid configuration</h3>
+        <p>Required when <code>email_provider</code> is <code>sendgrid</code>.</p>
+        <table class="data-table">
+          <thead><tr><th>Key</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>sendgrid_api_key</code></td><td>secret</td><td>SendGrid API key from the SendGrid dashboard</td></tr>
+          </tbody>
+        </table>
       </section>
     </div>
+    <section class="surface">
+      <h3>Recipient formats</h3>
+      <p>Specify an email address directly, or a user ID resolved via the Auth Service.</p>
+      <pre class="code-block">{ "email": "alice@example.com" }
+{ "userId": "user-uuid-here" }</pre>
+    </section>
   </div>
 </section>
 

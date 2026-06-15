@@ -1,8 +1,8 @@
 ### Variables
 @baseUrl = http://localhost:3076
 @prodUrl = https://email.magicrunez.com
-@tenantId = 523789bc-67a6-11f1-8237-00505661e513
-@apiKey = c3bf5035-67b3-11f1-8237-00505661e513
+@tenantId = 3515ce3b-164d-11f1-946d-fe88d4cc3569
+@apiKey = eff66794-6800-11f1-8237-00505661e513
 @hostname = localhost
 
 # ─────────────────────────────────────────────
@@ -17,7 +17,7 @@ X-APIKEY: {{apiKey}}
 X-Hostname: {{hostname}}
 
 {
-  "subject": "Hello from MagicStack Email",
+  "subject": "Hello from Three To Focus Email",
   "htmlBody": "<h1>Hello!</h1><p>This is a test email.</p>",
   "to": [
     { "email": "cairnswm@gmail.com" }
@@ -35,7 +35,7 @@ X-APIKEY: {{apiKey}}
 X-Hostname: {{hostname}}
 
 {
-  "subject": "Hello from MagicRunez Email",
+  "subject": "Hello from Three To Focus Email",
   "htmlBody": "<h1>Hello!</h1><p>This is a test email.</p>",
   "to": [
     { "email": "cairnswm@gmail.com" }
@@ -52,174 +52,9 @@ X-APIKEY: {{apiKey}}
 X-Hostname: {{hostname}}
 
 {
-  "subject": "Welcome to the platform",
+  "subject": "Welcome to Three To Focus Email",
   "htmlBody": "<p>Your account is ready.</p>",
   "to": [
     { "userId": "44" }
   ]
 }
-
-### PRODUCTION
-
-POST {{prodUrl}}/send
-Content-Type: application/json
-X-Tenant-ID: {{tenantId}}
-X-APIKEY: {{apiKey}}
-X-Hostname: {{hostname}}
-
-{
-  "subject": "Welcome to the platform",
-  "htmlBody": "<p>Your account is ready.</p>",
-  "to": [
-    { "userId": "user-abc123" }
-  ]
-}
-
-### Send email with an attachment (base64 upload)
-POST {{baseUrl}}/send
-Content-Type: application/json
-X-Tenant-ID: {{tenantId}}
-X-APIKEY: {{apiKey}}
-X-Hostname: {{hostname}}
-
-{
-  "subject": "Your invoice",
-  "htmlBody": "<p>Please find your invoice attached.</p>",
-  "to": [
-    { "email": "billing@example.com" }
-  ],
-  "attachments": [
-    {
-      "type": "upload",
-      "filename": "invoice.pdf",
-      "contentType": "application/pdf",
-      "content": "JVBERi0xLjQKJcOkw7zDtsOfCjIgMCBvYmoK..."
-    }
-  ]
-}
-
-###
-
-### Send email with an attachment by file code
-POST {{baseUrl}}/send
-Content-Type: application/json
-X-Tenant-ID: {{tenantId}}
-X-APIKEY: {{apiKey}}
-X-Hostname: {{hostname}}
-
-{
-  "subject": "Your report",
-  "htmlBody": "<p>See attached report.</p>",
-  "to": [
-    { "email": "reports@example.com" }
-  ],
-  "attachments": [
-    {
-      "type": "file",
-      "fileCode": "report-2026-06"
-    }
-  ]
-}
-
-###
-
-### Send email with an embedded image (base64 upload)
-POST {{baseUrl}}/send
-Content-Type: application/json
-X-Tenant-ID: {{tenantId}}
-X-APIKEY: {{apiKey}}
-X-Hostname: {{hostname}}
-
-{
-  "subject": "Check out this image",
-  "htmlBody": "<p><img src=\"cid:logo\" alt=\"logo\" /></p>",
-  "to": [
-    { "email": "marketing@example.com" }
-  ],
-  "images": [
-    {
-      "type": "upload",
-      "filename": "logo.png",
-      "contentType": "image/png",
-      "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ..."
-    }
-  ]
-}
-
-###
-
-### Send email with an embedded image by image code
-POST {{baseUrl}}/send
-Content-Type: application/json
-X-Tenant-ID: {{tenantId}}
-X-APIKEY: {{apiKey}}
-X-Hostname: {{hostname}}
-
-{
-  "subject": "Promo email",
-  "htmlBody": "<p>See our new banner below!</p>",
-  "to": [
-    { "email": "promo@example.com" }
-  ],
-  "images": [
-    {
-      "type": "imaginary",
-      "imageCode": "promo-banner-summer"
-    }
-  ]
-}
-
-# ─────────────────────────────────────────────
-# POST /send/:templateCode  —  Send a templated email
-# ─────────────────────────────────────────────
-
-###
-
-### Send a templated email
-POST {{baseUrl}}/send/welcome-email
-Content-Type: application/json
-X-Tenant-ID: {{tenantId}}
-X-APIKEY: {{apiKey}}
-X-Hostname: {{hostname}}
-
-{
-  "to": [
-    { "email": "newuser@example.com" }
-  ],
-  "parameters": {
-    "firstName": "Alice",
-    "activationLink": "https://example.com/activate?token=abc123",
-    "expiryHours": 24
-  }
-}
-
-###
-
-### Send a templated email with cc and attachment
-POST {{baseUrl}}/send/invoice-template
-Content-Type: application/json
-X-Tenant-ID: {{tenantId}}
-X-APIKEY: {{apiKey}}
-X-Hostname: {{hostname}}
-
-{
-  "to": [
-    { "email": "client@example.com" }
-  ],
-  "cc": [
-    { "email": "accounts@mycompany.com" }
-  ],
-  "parameters": {
-    "invoiceNumber": "INV-2026-0042",
-    "amount": 149.99,
-    "dueDate": "2026-07-01"
-  },
-  "attachments": [
-    {
-      "type": "file",
-      "fileCode": "inv-2026-0042-pdf"
-    }
-  ]
-}
-
-###

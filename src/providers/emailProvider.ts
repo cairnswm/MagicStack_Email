@@ -23,8 +23,9 @@ export interface SmtpConfig {
 }
 
 async function sendViaResend(secret: string, params: SendParams): Promise<ProviderResult> {
+  const from = params.fromName ? `${params.fromName} <${params.fromEmail}>` : params.fromEmail;
   const body: Record<string, unknown> = {
-    from: `${params.fromName} <${params.fromEmail}>`,
+    from,
     to: params.toAddresses,
     subject: params.subject,
     html: params.htmlBody,

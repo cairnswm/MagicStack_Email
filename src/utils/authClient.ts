@@ -160,4 +160,26 @@ export async function fetchUser(
   return res.json() as Promise<{ email: string; displayName?: string }>;
 }
 
-export default { validateToken, fetchTenant, fetchSecret, fetchUser, getUserJwt };
+const KEYS_API = (process.env.MAGICSTACK_KEYS_API || '').replace(/\/$/, '');
+
+export async function fetchApiKeyProperty(
+  apiKey: string,
+  tenantId: string,
+  propertyName: string,
+): Promise<string | undefined> {
+  const fetchFn = getFetch();
+  const url = `${KEYS_API}/apikey/${encodeURIComponent(apiKey)}/property/${encodeURIComponent(propertyName)}`;
+  log('info', `[fetchApiKeyProperty] GET ${url} (tenant: ${tenantId})`);
+  const res = await fetchFn(url, {
+    headers: { Accept: 'application/json', 'X-Tenant-ID': tenantId },
+  });
+  log('info', `[fetchApiKeyProperty] response status: ${res.status}`);
+  if (!res.ok) {
+    log('warn', `[fetchApiKeyProperty] non-OK response for property "${propertyName}" — returning undefined`);
+    return undefined;
+  }
+  const body = await res.json() as { data?: { value?: string } };
+  return body.data?.value;
+}
+
+export default { validateToken, fetchTenant, fetchSecret, fetchUser, getUserJwt, fetchApiKeyProperty };

@@ -17,6 +17,7 @@ import {
   generateEmailCode,
 } from '../services/emailService';
 import { sendViaProvider, SmtpConfig } from '../providers/emailProvider';
+import { fetchApiKeyProperty } from '../utils/authClient';
 
 const router = Router();
 
@@ -43,6 +44,18 @@ async function processSend(
   const callerHostname = (req as any).callerHostname as string;
   const tenantUtils = (req as any).tenantUtils;
 
+  const sendByEmail = await fetchApiKeyProperty(apiKey, tenantId, 'sendByEmail');
+  const canSendByEmail = sendByEmail === 'true' || sendByEmail === '1';
+  const canSendByUserId = true;
+
+  const allRecipientEntries = [...(body.to || []), ...(body.cc || []), ...(body.bcc || [])];
+  const hasEmailRecipients = allRecipientEntries.some(r => 'email' in r && r.email);
+
+  if (!canSendByEmail && hasEmailRecipients) {
+    res.status(403).json(errorResponse('API key is only permitted to send to registered users. Use userId recipients instead of email addresses.'));
+    return;
+  }
+
   const providerName = await tenantUtils.getProperty('email_provider');
   const deliveryMode = (await tenantUtils.getProperty('email_delivery_mode')) || 'sync';
   const senderName = (await tenantUtils.getProperty('sender_name')) || '';
@@ -65,6 +78,11 @@ async function processSend(
     senderEmail = (await tenantUtils.getProperty('sender_email')) || '';
     if (!senderEmail) {
       res.status(400).json(errorResponse('Tenant sender_email property is not configured'));
+      return;
+    }
+    const emailFormatValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderEmail);
+    if (!emailFormatValid) {
+      res.status(400).json(errorResponse(`Tenant sender_email value '${senderEmail}' is not a valid email address`));
       return;
     }
   }
