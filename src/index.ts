@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express, { Request, Response } from 'express';
 import dbRouter from './routes/db';
+import healthRouter from './routes/health';
 import tenantMiddleware from './middleware/tenantMiddleware';
 import tenantRouter from './routes/tenant';
 import sampleRouter from './routes/sample';
@@ -16,6 +17,9 @@ const BASE_PATH = (process.env.BASE_PATH || '/').replace(/\/$/, '');
 
 app.use(express.json());
 app.use(express.static('public'));
+
+// Health routes are public — register before tenantMiddleware
+app.use(`${BASE_PATH}/health`, healthRouter);
 
 // Attach tenant / auth helpers to every request
 app.use(tenantMiddleware as any);
@@ -67,28 +71,6 @@ app.use(`${BASE_PATH}/template`, templateRouter);
 app.use(`${BASE_PATH}/logs`, logsRouter);
 app.use(BASE_PATH || '/', docsRouter);
 app.use(`${BASE_PATH}/docs`, docsRouter);
-
-app.get(`${BASE_PATH}/health`, (req: Request, res: Response) => {
-  const deployedAtEnv = process.env.DEPLOYED_AT;
-  let deployedAtLocal = 'unknown';
-
-  if (deployedAtEnv) {
-    const parsed = new Date(deployedAtEnv);
-    if (!isNaN(parsed.getTime())) {
-      // convert the UTC/GMT timestamp from env to the server's local time string
-      deployedAtLocal = parsed.toLocaleString();
-    } else {
-      // if parsing fails, return the raw value
-      deployedAtLocal = deployedAtEnv;
-    }
-  }
-
-  res.json({
-    service: 'email',
-    status: 'ok',
-    deployed_at: deployedAtLocal,
-  });
-});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

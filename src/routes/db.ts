@@ -5,8 +5,16 @@ const router = Router();
 
 router.get('/health', async (req: Request, res: Response) => {
   try {
+    let databaseServerTime: string | null = null;
+    let databaseResponseMs: number | null = null;
+
     await withConnection(async (conn) => {
-      await conn.query('SELECT 1 as result');
+      const dbStart = Date.now();
+      const [rows]: any = await conn.query('SELECT NOW() as server_time');
+      databaseResponseMs = Date.now() - dbStart;
+      databaseServerTime = rows[0]?.server_time
+        ? new Date(rows[0].server_time).toISOString()
+        : null;
     });
 
     res.json({
@@ -15,6 +23,9 @@ router.get('/health', async (req: Request, res: Response) => {
       deployed_at: process.env.DEPLOYED_AT || null,
       message: 'Database connection successful',
       database: process.env.DB_NAME || 'test',
+      database_server_time: databaseServerTime,
+      database_response_ms: databaseResponseMs,
+      time_now: new Date().toISOString(),
     });
   } catch (error) {
     console.error('Database health check failed:', error);
