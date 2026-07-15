@@ -54,6 +54,7 @@ router.get('/', (_req: Request, res: Response) => {
       <p>Retrieve sent email records with full audit trail including recipients, delivery status, and event history.</p>
     </header>
     <nav class="site-nav" style="margin-bottom:0;border-bottom:1px solid #e5e7eb;padding-bottom:1rem;">
+      <a href="${withBasePath('/docs/config')}">Configuration</a>
       <a href="${withBasePath('/docs/send')}">Send Email</a>
       <a href="${withBasePath('/docs/templates')}">Templates</a>
       <a href="${withBasePath('/docs/logs')}" style="font-weight:600;color:#2d7a2d;">Logs</a>

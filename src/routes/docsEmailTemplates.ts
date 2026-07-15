@@ -54,6 +54,7 @@ router.get('/', (_req: Request, res: Response) => {
       <p>Create, list, update, and manage email templates. Templates use the advanced template language with support for conditions, loops, and calculations.</p>
     </header>
     <nav class="site-nav" style="margin-bottom:0;border-bottom:1px solid #e5e7eb;padding-bottom:1rem;">
+      <a href="${withBasePath('/docs/config')}">Configuration</a>
       <a href="${withBasePath('/docs/send')}">Send Email</a>
       <a href="${withBasePath('/docs/templates')}" style="font-weight:600;color:#2d7a2d;">Templates</a>
       <a href="${withBasePath('/docs/logs')}">Logs</a>

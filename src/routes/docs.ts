@@ -63,6 +63,10 @@ function renderEndpoint(
 const REQ_HEADERS = `X-Tenant-ID: {tenantId}\nX-APIKEY: {apiKey}\nX-Hostname: {hostname}`;
 
 router.get('/', (_req: Request, res: Response) => {
+  res.redirect(`${docsPath}/config`);
+});
+
+router.get('/overview', (_req: Request, res: Response) => {
   const body = `
 <header class="site-header">
   <span class="base-url">${basePath || '/'}</span>
@@ -70,7 +74,8 @@ router.get('/', (_req: Request, res: Response) => {
   <p>Multi-tenant email delivery platform with provider abstraction, template rendering, and activity logging.</p>
 </header>
 <nav class="site-nav" style="margin-bottom:0;border-bottom:1px solid #e5e7eb;padding-bottom:1rem;">
-  <a href="${withBasePath('/')}" style="font-weight:600;color:#2d7a2d;">Overview</a>
+  <a href="${withBasePath('/docs/config')}">Configuration</a>
+  <a href="${withBasePath('/docs/overview')}" style="font-weight:600;color:#2d7a2d;">Overview</a>
   <a href="${withBasePath('/docs/send')}">Send Email</a>
   <a href="${withBasePath('/docs/templates')}">Templates</a>
   <a href="${withBasePath('/docs/logs')}">Logs</a>
@@ -214,6 +219,7 @@ router.get('/template-help', (_req: Request, res: Response) => {
 </header>
 
 <nav class="site-nav" style="margin-bottom:0;border-bottom:1px solid #e5e7eb;padding-bottom:1rem;">
+  <a href="${withBasePath('/docs/config')}">Configuration</a>
   <a href="${withBasePath('/docs/send')}">Send Email</a>
   <a href="${withBasePath('/docs/templates')}">Templates</a>
   <a href="${withBasePath('/docs/logs')}">Logs</a>
