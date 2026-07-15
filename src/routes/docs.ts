@@ -69,11 +69,20 @@ router.get('/', (_req: Request, res: Response) => {
   <h1>MagicStack Email Service</h1>
   <p>Multi-tenant email delivery platform with provider abstraction, template rendering, and activity logging.</p>
 </header>
-<nav class="site-nav">
-  <a href="#send">Send Email</a>
-  <a href="#templates">Templates</a>
-  <a href="#logs">Logs</a>
-  <a href="${docsPath}/template-help">Template Help</a>
+<nav class="site-nav" style="margin-bottom:0;border-bottom:1px solid #e5e7eb;padding-bottom:1rem;">
+  <a href="${withBasePath('/')}" style="font-weight:600;color:#2d7a2d;">Overview</a>
+  <a href="${withBasePath('/docs/send')}">Send Email</a>
+  <a href="${withBasePath('/docs/templates')}">Templates</a>
+  <a href="${withBasePath('/docs/logs')}">Logs</a>
+  <a href="${withBasePath('/docs/health')}">Health</a>
+  <a href="${withBasePath('/docs/template-help')}">Template Help</a>
+</nav>
+<nav class="site-nav" aria-label="On this page" style="margin-top:0.75rem;font-size:0.875rem;">
+  <span style="color:#666;font-weight:500;">On this page:</span>
+  <a href="#overview">Overview</a>
+  <a href="#send">Email Send</a>
+  <a href="#templates">Template Management</a>
+  <a href="#logs">Email Logs</a>
 </nav>
 <main class="content-shell stack">
 
@@ -162,7 +171,28 @@ ${renderEndpoint('GET', '/logs/:tenantId/email/:emailCode', 'Get email detail',
   `GET /logs/{tenantId}/email/{emailCode}\n${REQ_HEADERS}`,
   `200 OK\n{\n  "data": {\n    "id": 1,\n    "emailCode": "uuid",\n    "senderEmail": "noreply@example.com",\n    "subject": "Hello!",\n    "htmlBody": "&lt;h1&gt;Hello!&lt;/h1&gt;",\n    "status": "sent",\n    "provider": "resend",\n    "recipients": [{\n      "type": "to",\n      "emailAddress": "alice@example.com"\n    }],\n    "events": [\n      { "eventType": "created", "createdAt": "2025-01-01T00:00:00Z" },\n      { "eventType": "sent", "createdAt": "2025-01-01T00:00:01Z" }\n    ],\n    "createdAt": "2025-01-01T00:00:00Z",\n    "sentAt": "2025-01-01T00:00:01Z"\n  }\n}`)}
 
-</main>`;
+</main>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+      anchor.addEventListener('click', function(event) {
+        const href = anchor.getAttribute('href') || '';
+        if (!href || href === '#') return;
+        const target = document.getElementById(href.slice(1));
+        if (!target) return;
+        event.preventDefault();
+        history.replaceState(null, '', href);
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    if (location.hash) {
+      const target = document.getElementById(location.hash.slice(1));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+</script>`;
   res.type('html').send(renderPage('MagicStack Email Service', body));
 });
 
