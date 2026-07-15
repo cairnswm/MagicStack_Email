@@ -12,7 +12,8 @@ router.get('/property', async (req: Request, res: Response) => {
     if (!tenantId) return res.status(400).json(errorResponse('Tenant id is required (header X-Tenant-ID or query ?tenantId=)'));
 
     const authHeader = req.header('authorization') || '';
-    const data = await authClient.fetchTenant(tenantId, authHeader);
+    const hostname = (req as any).callerHostname as string;
+    const data = await authClient.fetchTenant(tenantId, authHeader || undefined, hostname);
     const props = data.properties || [];
 
     res.json(successResponse(props));
@@ -33,7 +34,8 @@ router.get('/property/:name', async (req: Request, res: Response) => {
     if (!tenantId) return res.status(400).json(errorResponse('Tenant id is required (header X-Tenant-ID or query ?tenantId=) when requesting a property by name'));
 
     const authHeader = req.header('authorization') || '';
-    const data = await authClient.fetchTenant(tenantId, authHeader);
+    const hostname = (req as any).callerHostname as string;
+    const data = await authClient.fetchTenant(tenantId, authHeader || undefined, hostname);
     const prop = (data.properties || []).find(p => p.name === name);
     if (typeof prop === 'undefined') return res.status(404).json(errorResponse(`Property '${name}' not found for tenant ${tenantId}`));
     res.json({ name, value: prop.value });
@@ -49,7 +51,8 @@ router.get('/setting', async (req: Request, res: Response) => {
     if (!tenantId) return res.status(400).json(errorResponse('Tenant id is required (header X-Tenant-ID or query ?tenantId=)'));
 
     const authHeader = req.header('authorization') || '';
-    const data = await authClient.fetchTenant(tenantId, authHeader);
+    const hostname = (req as any).callerHostname as string;
+    const data = await authClient.fetchTenant(tenantId, authHeader || undefined, hostname);
     const settingsObj = data.settings || {};
     const settings = Object.keys(settingsObj).map(k => ({ name: k, value: settingsObj[k] }));
 
@@ -71,7 +74,8 @@ router.get('/setting/:name', async (req: Request, res: Response) => {
     if (!tenantId) return res.status(400).json(errorResponse('Tenant id is required (header X-Tenant-ID or query ?tenantId=) when requesting a setting by name'));
 
     const authHeader = req.header('authorization') || '';
-    const data = await authClient.fetchTenant(tenantId, authHeader);
+    const hostname = (req as any).callerHostname as string;
+    const data = await authClient.fetchTenant(tenantId, authHeader || undefined, hostname);
     const val = data.settings ? data.settings[name] : undefined;
     if (typeof val === 'undefined') return res.status(404).json(errorResponse(`Setting '${name}' not found for tenant ${tenantId}`));
     res.json({ name, value: val });

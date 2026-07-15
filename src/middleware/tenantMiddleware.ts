@@ -83,7 +83,7 @@ async function initTenantContext(req: Request, _res: Response, next: NextFunctio
 
   if (tenantId) {
     try {
-      const data = await authClient.fetchTenant(tenantId, authHeader);
+      const data = await authClient.fetchTenant(tenantId, authHeader || undefined, callerHostname);
 
       tenantUtils.tenant = data.tenant;
       tenantUtils.properties = data.properties || [];
@@ -101,7 +101,7 @@ async function initTenantContext(req: Request, _res: Response, next: NextFunctio
         return secret?.value;
       };
       tenantUtils.refresh = async () => {
-        const fresh = await authClient.fetchTenant(tenantId, authHeader);
+        const fresh = await authClient.fetchTenant(tenantId, authHeader || undefined, callerHostname);
         tenantUtils.tenant = fresh.tenant;
         tenantUtils.properties = fresh.properties || [];
         tenantUtils.settings = fresh.settings || {};
@@ -119,7 +119,7 @@ async function initTenantContext(req: Request, _res: Response, next: NextFunctio
   (req as any).validateToken = async (token?: string) => {
     const t = token || authHeader;
     if (!t) throw new Error('No Authorization token provided');
-    return authClient.validateToken(t);
+    return authClient.validateToken(t, callerHostname);
   };
 
   next();

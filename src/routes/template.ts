@@ -2,8 +2,79 @@ import { Router, Request, Response } from 'express';
 import { withConnection } from '../utils/db';
 import { getTenantId } from '../utils/tenant';
 import { errorResponse, successResponse } from '../utils/formatters';
+import { renderTemplate, RenderTemplateOptions, TemplateObject } from '../services/templateRenderer';
 
 const router = Router();
+
+type TemplateRenderRequest = {
+  id?: number;
+  slug?: string;
+  template?: string;
+  data?: TemplateObject;
+  options?: RenderTemplateOptions;
+};
+
+async function renderTemplatePreview(req: Request, res: Response, body: TemplateRenderRequest): Promise<Response> {
+  const tenantId = getTenantId(req);
+  const id = body.id;
+  const slug = body.slug;
+  const inlineTemplate = body.template;
+  const renderData = body.data;
+
+  if (!renderData || typeof renderData !== 'object' || Array.isArray(renderData)) {
+    return res.status(400).json(errorResponse('data is required and must be an object'));
+  }
+
+  if (id === undefined && !slug && !inlineTemplate) {
+    return res.status(400).json(errorResponse('Provide id, slug, or template'));
+  }
+
+  if (id !== undefined || slug) {
+    const rows = await withConnection(async (conn) => {
+      if (id !== undefined) {
+        const [result] = await conn.query(
+          `SELECT id, code, subject_template, html_template
+           FROM email_template WHERE tenant_id = ? AND id = ? LIMIT 1`,
+          [tenantId, id],
+        );
+        return result as any[];
+      }
+
+      const [result] = await conn.query(
+        `SELECT id, code, subject_template, html_template
+         FROM email_template WHERE tenant_id = ? AND code = ? LIMIT 1`,
+        [tenantId, slug],
+      );
+      return result as any[];
+    });
+
+    if (rows.length === 0) {
+      return res.status(404).json(errorResponse('Template not found'));
+    }
+
+    const template = rows[0];
+    const renderedSubject = renderTemplate(template.subject_template as string, renderData, body.options);
+    const renderedHtml = renderTemplate(template.html_template as string, renderData, {
+      ...(body.options || {}),
+      escapeHtml: body.options?.escapeHtml ?? true,
+    });
+
+    return res.json(successResponse({
+      source: 'stored',
+      templateId: template.id as number,
+      templateCode: template.code as string,
+      rendered: renderedHtml,
+      renderedSubject,
+      renderedHtml,
+    }));
+  }
+
+  const rendered = renderTemplate(inlineTemplate as string, renderData, body.options);
+  return res.json(successResponse({
+    source: 'inline',
+    rendered,
+  }));
+}
 
 // GET /template - list all templates for the tenant
 router.get('/', async (req: Request, res: Response) => {
@@ -62,9 +133,30 @@ router.get('/:code', async (req: Request, res: Response) => {
   }
 });
 
+// POST /template/render - render template from id/slug or inline template text
+router.post('/render', async (req: Request, res: Response) => {
+  try {
+    const body = req.body as TemplateRenderRequest;
+    return renderTemplatePreview(req, res, body);
+  } catch (err) {
+    return res.status(400).json(errorResponse(err instanceof Error ? err.message : 'Template rendering failed'));
+  }
+});
+
 // POST /template - create a new template
 router.post('/', async (req: Request, res: Response) => {
   try {
+    const maybeRender = req.body as TemplateRenderRequest;
+    const isRenderRequest = maybeRender && typeof maybeRender === 'object' && (
+      maybeRender.id !== undefined ||
+      !!maybeRender.slug ||
+      !!maybeRender.template
+    );
+
+    if (isRenderRequest) {
+      return renderTemplatePreview(req, res, maybeRender);
+    }
+
     const tenantId = getTenantId(req);
     const { code, name, description, subjectTemplate, htmlTemplate } = req.body as {
       code?: string;

@@ -133,13 +133,6 @@ export async function updateEmailFailed(conn: any, emailId: number, errorMessage
   );
 }
 
-export function renderTemplate(template: string, parameters: Record<string, string | number | boolean | null>): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => {
-    const val = parameters[key];
-    return val !== undefined && val !== null ? String(val) : '';
-  });
-}
-
 export function generateEmailCode(): string {
   return randomUUID();
 }

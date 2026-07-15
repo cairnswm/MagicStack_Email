@@ -33,7 +33,7 @@ export interface TenantResponse {
   settings: Record<string, any>;
 }
 
-export async function validateToken(bearerToken: string): Promise<any> {
+export async function validateToken(bearerToken: string, hostname: string): Promise<any> {
   if (!AUTH_API) throw new Error('MAGICSTACK_AUTH_API is not configured');
   const url = `${AUTH_API.replace(/\/$/, '')}/validate`;
 
@@ -44,6 +44,7 @@ export async function validateToken(bearerToken: string): Promise<any> {
     headers: {
       Authorization: bearerToken,
       Accept: 'application/json',
+      'X-Hostname': hostname,
     },
   });
 
@@ -62,13 +63,14 @@ export function getUserJwt(req: Request): string | undefined {
   return header.startsWith('Bearer ') ? header : `Bearer ${header}`;
 }
 
-export async function fetchTenant(tenantId: string, bearerToken?: string): Promise<TenantResponse> {
+export async function fetchTenant(tenantId: string, bearerToken: string | undefined, hostname: string): Promise<TenantResponse> {
   if (!AUTH_API) throw new Error('MAGICSTACK_AUTH_API is not configured');
   const url = `${AUTH_API.replace(/\/$/, '')}/tenant/`;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'X-Tenant-ID': tenantId,
+    'X-Hostname': hostname,
   };
 
   if (bearerToken) headers.Authorization = bearerToken;
@@ -166,12 +168,13 @@ export async function fetchApiKeyProperty(
   apiKey: string,
   tenantId: string,
   propertyName: string,
+  hostname: string,
 ): Promise<string | undefined> {
   const fetchFn = getFetch();
   const url = `${KEYS_API}/apikey/${encodeURIComponent(apiKey)}/property/${encodeURIComponent(propertyName)}`;
   log('info', `[fetchApiKeyProperty] GET ${url} (tenant: ${tenantId})`);
   const res = await fetchFn(url, {
-    headers: { Accept: 'application/json', 'X-Tenant-ID': tenantId },
+    headers: { Accept: 'application/json', 'X-Tenant-ID': tenantId, 'X-Hostname': hostname },
   });
   log('info', `[fetchApiKeyProperty] response status: ${res.status}`);
   if (!res.ok) {

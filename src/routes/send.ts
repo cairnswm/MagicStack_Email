@@ -13,11 +13,11 @@ import {
   createQueueRecord,
   updateEmailSent,
   updateEmailFailed,
-  renderTemplate,
   generateEmailCode,
 } from '../services/emailService';
 import { sendViaProvider, SmtpConfig } from '../providers/emailProvider';
 import { fetchApiKeyProperty } from '../utils/authClient';
+import { renderTemplate, TemplateObject } from '../services/templateRenderer';
 
 const router = Router();
 
@@ -37,14 +37,14 @@ async function processSend(
   body: BaseEmailBody,
   templateId?: number,
   templateCode?: string,
-  renderData?: Record<string, string | number | boolean | null>,
+  renderData?: Record<string, unknown>,
 ): Promise<void> {
   const tenantId = getTenantId(req);
   const apiKey = (req as any).apiKey as string;
   const callerHostname = (req as any).callerHostname as string;
   const tenantUtils = (req as any).tenantUtils;
 
-  const sendByEmail = await fetchApiKeyProperty(apiKey, tenantId, 'sendByEmail');
+  const sendByEmail = await fetchApiKeyProperty(apiKey, tenantId, 'sendByEmail', callerHostname);
   const canSendByEmail = sendByEmail === 'true' || sendByEmail === '1';
   const canSendByUserId = true;
 
@@ -219,8 +219,9 @@ router.post('/:templateCode', async (req: Request, res: Response) => {
     }
 
     const template = rows[0];
-    const subject = renderTemplate(template.subject_template as string, body.parameters);
-    const htmlBody = renderTemplate(template.html_template as string, body.parameters);
+    const renderData = body.parameters as TemplateObject;
+    const subject = renderTemplate(template.subject_template as string, renderData);
+    const htmlBody = renderTemplate(template.html_template as string, renderData, { escapeHtml: true });
 
     return processSend(req, res, subject, htmlBody, body, template.id as number, templateCode, body.parameters);
   } catch (err) {

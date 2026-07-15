@@ -80,27 +80,31 @@ function buildBody(logoUrl: string): string {
       <span class="base-url">${basePath || '/'}</span>
       <img src="${logoUrl}" alt="" style="width:2rem;height:2rem;vertical-align:middle;margin-right:0.5rem;" />
       <h1>Email API</h1>
-      <p>Multi-tenant email delivery. Every request requires
+      <p>Multi-tenant email delivery with templates, sending, and audit logs. Every request requires
          <code>X-Tenant-ID</code>, <code>X-APIKEY</code>, and <code>X-Hostname</code> headers.</p>
     </header>
     <nav class="site-nav">
-      <a href="${withBasePath('/')}">Docs</a>
+      <a href="${withBasePath('/docs/send')}">Send Email</a>
+      <a href="${withBasePath('/docs/templates')}">Templates</a>
+      <a href="${withBasePath('/docs/logs')}">Logs</a>
       <a href="${withBasePath('/docs/health')}">Health</a>
-      <a href="${withBasePath('/docs/dbhealth')}">DB Health</a>
+      <a href="${withBasePath('/docs/template-help')}">Template Help</a>
     </nav>
 
-    <main id="health-panel" style="display:none;" class="content-shell">
-      <section class="doc-card">
-        <div class="doc-card-header">
-          <div>
-            <div id="health-panel-title" class="doc-card-title">Health</div>
-          </div>
-        </div>
-        <div class="doc-card-body" id="health-panel-body"></div>
-      </section>
-    </main>
+    <main class="content-shell">
 
-    <main id="docs" class="content-shell">
+      <section class="doc-card">
+        <div class="doc-card-header"><div><div class="doc-card-title">API Sections</div></div></div>
+        <div class="doc-card-body stack">
+          <p><strong>This API is organized into focused sections. Choose one below:</strong></p>
+          <ul>
+            <li><a href="${withBasePath('/docs/send')}">Send Email</a> — Direct and templated sending, with preview rendering</li>
+            <li><a href="${withBasePath('/docs/templates')}">Templates</a> — Create, list, update, delete email templates</li>
+            <li><a href="${withBasePath('/docs/logs')}">Logs &amp; Audit</a> — Retrieve sent email records and full audit trail</li>
+            <li><a href="${withBasePath('/docs/template-help')}">Template Help</a> — How to use the template language and render options</li>
+          </ul>
+        </div>
+      </section>
 
       <section class="doc-card">
         <div class="doc-card-header"><div><div class="doc-card-title">Shared types</div></div></div>
@@ -108,162 +112,6 @@ function buildBody(logoUrl: string): string {
           <pre class="code-block">${sharedTypes}</pre>
         </div>
       </section>
-
-      ${apiCard('POST', '/send', 'Send an email',
-        'Sends an email directly without a stored template. Resolves synchronously or queues the email depending on tenant delivery mode. Requires the tenant API key to have the <code>sendByEmail</code> property set to <code>true</code> or <code>1</code>; returns 403 otherwise.',
-        `type SendEmailRequest = {
-  subject: string;
-  htmlBody: string;
-  to: EmailRecipient[];
-  cc?: EmailRecipient[];
-  bcc?: EmailRecipient[];
-  attachments?: EmailAttachment[];
-  images?: EmailImage[];
-};`,
-        `type SendEmailResponse = {
-  emailId: number;
-  emailCode: string;
-  status: EmailStatus;
-  provider: string;
-};`)}
-
-      ${apiCard('POST', '/send/:templateCode', 'Send a templated email',
-        'Renders a stored template with the supplied parameters then sends it. Rendered content is stored in the audit trail so future template edits do not affect historical records.',
-        `type SendTemplateEmailRequest = {
-  to: EmailRecipient[];
-  cc?: EmailRecipient[];
-  bcc?: EmailRecipient[];
-  attachments?: EmailAttachment[];
-  images?: EmailImage[];
-  parameters: {
-    [key: string]: string | number | boolean | null;
-  };
-};`,
-        `type SendTemplateEmailResponse = {
-  emailId: number;
-  emailCode: string;
-  templateCode: string;
-  status: EmailStatus;
-  provider: string;
-};`)}
-
-      ${apiCard('GET', '/logs/:tenantId/email', 'List email log',
-        'Returns a paginated list of emails sent by the tenant. Supports filtering by status, template code, and date range.',
-        `// All fields are query parameters
-type EmailLogQuery = {
-  page?: number;
-  pageSize?: number;
-  status?: EmailStatus;
-  templateCode?: string;
-  fromDate?: string;  // ISO 8601
-  toDate?: string;    // ISO 8601
-};`,
-        `type EmailLogResponse = {
-  total: number;
-  page: number;
-  pageSize: number;
-  items: {
-    id: number;
-    emailCode: string;
-    templateCode?: string;
-    subject: string;
-    status: EmailStatus;
-    provider: string;
-    recipientCount: number;
-    createdAt: string;
-    sentAt?: string;
-  }[];
-};`)}
-
-      ${apiCard('GET', '/logs/:tenantId/email/:emailCode', 'Email details',
-        'Returns the full audit record for a single email including all recipients and event history. Intended for troubleshooting and compliance.',
-        `// emailCode in path — no request body`,
-        `type EmailDetailsResponse = {
-  id: number;
-  emailCode: string;
-  templateCode?: string;
-  senderName: string;
-  senderEmail: string;
-  subject: string;
-  htmlBody: string;
-  status: EmailStatus;
-  provider: string;
-  providerMessageId?: string;
-  errorMessage?: string;
-  recipients: {
-    type: string;
-    emailAddress: string;
-    userId?: string;
-  }[];
-  events: {
-    eventType: string;
-    eventMessage?: string;
-    createdAt: string;
-  }[];
-  createdAt: string;
-  sentAt?: string;
-};`)}
-
-      ${apiCard('GET', '/template', 'List templates',
-        'Returns all templates owned by the tenant. Templates from other tenants are never visible.',
-        `// No body — tenant scoped via X-Tenant-ID header`,
-        `type GetTemplatesResponse = {
-  templates: {
-    id: number;
-    code: string;
-    name: string;
-    isActive: boolean;
-  }[];
-};`)}
-
-      ${apiCard('GET', '/template/:code', 'Get template',
-        'Returns a single template by code, including its subject and HTML body templates.',
-        `// code in path — no request body`,
-        `type GetTemplateResponse = {
-  id: number;
-  code: string;
-  name: string;
-  description?: string;
-  subjectTemplate: string;
-  htmlTemplate: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-};`)}
-
-      ${apiCard('POST', '/template', 'Create template',
-        'Creates a new template owned by the tenant. Template codes must be unique within the tenant.',
-        `type CreateTemplateRequest = {
-  code: string;
-  name: string;
-  description?: string;
-  subjectTemplate: string;
-  htmlTemplate: string;
-};`,
-        `type CreateTemplateResponse = {
-  id: number;
-  code: string;
-};`)}
-
-      ${apiCard('PUT', '/template/:code', 'Update template',
-        'Updates fields on an existing template. All fields are optional. Historical emails already sent are unaffected.',
-        `type UpdateTemplateRequest = {
-  name?: string;
-  description?: string;
-  subjectTemplate?: string;
-  htmlTemplate?: string;
-  isActive?: boolean;
-};`,
-        `type UpdateTemplateResponse = {
-  success: boolean;
-};`)}
-
-      ${apiCard('DELETE', '/template/:code', 'Delete template',
-        'Soft-deletes the template by marking it inactive. Existing email records are unchanged.',
-        `// code in path — no request body`,
-        `type DeleteTemplateResponse = {
-  success: boolean;
-};`)}
 
     </main>
 

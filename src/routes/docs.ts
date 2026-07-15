@@ -1,4 +1,6 @@
 import { Router, Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 
 const router = Router();
 const basePath = (process.env.BASE_PATH || '').replace(/\/$/, '');
@@ -7,32 +9,6 @@ const docsPath = `${basePath}/docs`;
 function withBasePath(path: string): string {
   return `${basePath}${path}` || path;
 }
-
-const ordersTableSql = `
-CREATE TABLE IF NOT EXISTS orders (
-  id            INT AUTO_INCREMENT PRIMARY KEY,
-  tenant_id     VARCHAR(100) NOT NULL,
-  order_id      VARCHAR(255) NOT NULL,
-  payment_id    INT          NULL,
-  status        VARCHAR(50)  NOT NULL DEFAULT 'pending',
-  amount        INT          NOT NULL DEFAULT 0,
-  currency      CHAR(3)      NOT NULL DEFAULT 'ZAR',
-  metadata      JSON         NULL,
-  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY uq_order (tenant_id, order_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-`;
-
-const paymentWebhookTableSql = `
-CREATE TABLE IF NOT EXISTS payment_webhook (
-  id             INT AUTO_INCREMENT PRIMARY KEY,
-  tenant_id      VARCHAR(100) NULL,
-  event          VARCHAR(100)  NULL,
-  message        TEXT          NOT NULL,
-  created_at     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-`;
 
 function renderPage(title: string, body: string): string {
   return `<!doctype html>
@@ -45,6 +21,13 @@ function renderPage(title: string, body: string): string {
   </head>
   <body class="app-shell">${body}</body>
 </html>`;
+}
+
+function escHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function renderEndpoint(
@@ -87,79 +70,36 @@ router.get('/', (_req: Request, res: Response) => {
   <p>Multi-tenant email delivery platform with provider abstraction, template rendering, and activity logging.</p>
 </header>
 <nav class="site-nav">
-  <a href="#setup">Setup</a>
-  <a href="#send">Send</a>
+  <a href="#send">Send Email</a>
   <a href="#templates">Templates</a>
   <a href="#logs">Logs</a>
-  <a href="${docsPath}/payments">Payments</a>
-  <a href="${withBasePath('/health')}">Health</a>
+  <a href="${docsPath}/template-help">Template Help</a>
 </nav>
 <main class="content-shell stack">
 
-<section class="doc-card" id="setup">
+<section class="doc-card" id="overview">
   <div class="doc-card-header">
     <div>
-      <div class="endpoint-path">Tenant Setup</div>
-      <div class="doc-card-title">Configure a tenant for email sending</div>
+      <div class="endpoint-path">API Overview</div>
+      <div class="doc-card-title">Email sending, templates, and logs</div>
     </div>
   </div>
   <div class="doc-card-body stack">
-    <div class="alert alert--info">
-      <strong class="alert__title">Required headers</strong>
-      <p>Every request must include <code>X-Tenant-ID</code>, <code>X-APIKEY</code>, and <code>X-Hostname</code>. Missing headers return <code>400</code>.</p>
-    </div>
-    <section class="surface">
-      <h3>Common properties</h3>
-      <p>Set the following via the Auth/Tenant Service for all providers before sending email.</p>
-      <table class="data-table">
-        <thead><tr><th>Property</th><th>Required</th><th>Values</th><th>Purpose</th></tr></thead>
-        <tbody>
-          <tr><td><code>email_provider</code></td><td>Yes</td><td><code>resend</code> | <code>sendgrid</code> | <code>smtp</code></td><td>Delivery provider</td></tr>
-          <tr><td><code>email_delivery_mode</code></td><td>Yes</td><td><code>sync</code> | <code>async</code></td><td><code>sync</code> sends immediately; <code>async</code> queues</td></tr>
-          <tr><td><code>sender_email</code></td><td>Yes</td><td>email address</td><td>From address shown to recipients</td></tr>
-          <tr><td><code>sender_name</code></td><td>No</td><td>display name</td><td>Display name shown next to the From address</td></tr>
-        </tbody>
-      </table>
-    </section>
-    <div class="two-column">
-      <section class="surface">
-        <h3>SMTP configuration</h3>
-        <p>Required when <code>email_provider</code> is <code>smtp</code>.</p>
-        <table class="data-table">
-          <thead><tr><th>Key</th><th>Type</th><th>Purpose</th></tr></thead>
-          <tbody>
-            <tr><td><code>smtp_host</code></td><td>property</td><td>SMTP server hostname</td></tr>
-            <tr><td><code>smtp_port</code></td><td>property</td><td>Server port — <code>465</code> (TLS) or <code>587</code> (STARTTLS)</td></tr>
-            <tr><td><code>smtp_username</code></td><td>property</td><td>Authentication username (usually the From address)</td></tr>
-            <tr><td><code>smtp</code></td><td>secret</td><td>SMTP account password</td></tr>
-          </tbody>
-        </table>
-      </section>
-      <section class="surface">
-        <h3>Resend configuration</h3>
-        <p>Required when <code>email_provider</code> is <code>resend</code>.</p>
-        <table class="data-table">
-          <thead><tr><th>Key</th><th>Type</th><th>Purpose</th></tr></thead>
-          <tbody>
-            <tr><td><code>resend_api_key</code></td><td>secret</td><td>Resend API key from the Resend dashboard</td></tr>
-          </tbody>
-        </table>
-        <h3>SendGrid configuration</h3>
-        <p>Required when <code>email_provider</code> is <code>sendgrid</code>.</p>
-        <table class="data-table">
-          <thead><tr><th>Key</th><th>Type</th><th>Purpose</th></tr></thead>
-          <tbody>
-            <tr><td><code>sendgrid_api_key</code></td><td>secret</td><td>SendGrid API key from the SendGrid dashboard</td></tr>
-          </tbody>
-        </table>
-      </section>
-    </div>
-    <section class="surface">
-      <h3>Recipient formats</h3>
-      <p>Specify an email address directly, or a user ID resolved via the Auth Service.</p>
-      <pre class="code-block">{ "email": "alice@example.com" }
-{ "userId": "user-uuid-here" }</pre>
-    </section>
+    <p><strong>This API provides:</strong></p>
+    <ul>
+      <li><strong>Direct send</strong> — POST /send with subject and HTML body</li>
+      <li><strong>Template send</strong> — POST /send/:templateCode with render parameters</li>
+      <li><strong>Template preview</strong> — POST /template/render to validate output before sending</li>
+      <li><strong>Template CRUD</strong> — Create, list, update, or delete email templates</li>
+      <li><strong>Email logs</strong> — Retrieve sent email records with full audit trail</li>
+    </ul>
+    <p><strong>Required headers for every request:</strong></p>
+    <ul>
+      <li><code>X-Tenant-ID</code> — Tenant identifier (scopes all data access)</li>
+      <li><code>X-APIKEY</code> — API key for authorization and credential access</li>
+      <li><code>X-Hostname</code> — Caller hostname for audit logging</li>
+    </ul>
+    <p>Missing headers return <code>400</code>. Browse the endpoint docs or see <a href="${docsPath}/template-help">Template Help</a> for detailed guidance.</p>
   </div>
 </section>
 
@@ -187,8 +127,14 @@ ${renderEndpoint('GET', '/template/:code', 'Get template',
   `GET /template/welcome-email\n${REQ_HEADERS}`,
   `200 OK\n{\n  "data": {\n    "id": 1,\n    "code": "welcome-email",\n    "name": "Welcome Email",\n    "description": "Sent on registration",\n    "subjectTemplate": "Welcome, {{firstName}}!",\n    "htmlTemplate": "&lt;h1&gt;Hello {{firstName}}&lt;/h1&gt;",\n    "isActive": true,\n    "createdAt": "2025-01-01T00:00:00Z",\n    "updatedAt": "2025-01-01T00:00:00Z"\n  }\n}`)}
 
+${renderEndpoint('POST', '/template/render', 'Render template preview',
+  'Renders a template without sending an email. Accepts either a stored template via <code>id</code> or <code>slug</code>, or inline template text via <code>template</code>. Returns the rendered output for validation.',
+  `POST /template/render\n${REQ_HEADERS}\nContent-Type: application/json\n\n{\n  "slug": "invoice-order-email",\n  "data": {\n    "customer": { "first_name": "Amina" },\n    "order": {\n      "reference": "ORD-1042",\n      "paid": true,\n      "subtotal": 100,\n      "tax": 30,\n      "discount": 10,\n      "items": [{ "name": "Notebook", "price": 50, "quantity": 2 }]\n    }\n  },\n  "options": {\n    "removeSpaceBeforePunctuation": false,\n    "removeEmptyLines": false,\n    "collapseWhitespace": false\n  }\n}`,
+  `200 OK\n{\n  "data": {\n    "source": "stored",\n    "templateId": 1,\n    "templateCode": "invoice-order-email",\n    "renderedSubject": "Invoice ORD-1042 - Paid",\n    "renderedHtml": "...full rendered template...",\n    "rendered": "...full rendered template..."\n  }\n}`,
+  `<section class="surface"><table class="data-table"><thead><tr><th>Body field</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>id</code></td><td>number</td><td>Optional template id (stored template lookup)</td></tr><tr><td><code>slug</code></td><td>string</td><td>Optional template code (stored template lookup)</td></tr><tr><td><code>template</code></td><td>string</td><td>Inline template content when no <code>id</code>/<code>slug</code> is supplied</td></tr><tr><td><code>data</code></td><td>object</td><td>Required render data object</td></tr><tr><td><code>options</code></td><td>object</td><td>Optional render settings: <code>escapeHtml</code>, <code>removeSpaceBeforePunctuation</code>, <code>removeEmptyLines</code>, <code>collapseWhitespace</code></td></tr></tbody></table></section>`) }
+
 ${renderEndpoint('POST', '/template', 'Create template',
-  'Creates a new email template for the tenant. Use <code>{{key}}</code> placeholders in <code>subjectTemplate</code> and <code>htmlTemplate</code>. Returns <code>409</code> if the code already exists for this tenant.',
+  'Creates a new email template for the tenant when <code>code</code>, <code>name</code>, <code>subjectTemplate</code>, and <code>htmlTemplate</code> are provided. Also supports render-preview mode when the request body contains <code>id</code>, <code>slug</code>, or <code>template</code>. Returns <code>409</code> on duplicate code.',
   `POST /template\n${REQ_HEADERS}\nContent-Type: application/json\n\n{\n  "code": "welcome-email",\n  "name": "Welcome Email",\n  "description": "Sent on registration",\n  "subjectTemplate": "Welcome, {{firstName}}!",\n  "htmlTemplate": "&lt;h1&gt;Hello {{firstName}}&lt;/h1&gt;"\n}`,
   `201 Created\n{\n  "data": {\n    "id": 1,\n    "code": "welcome-email"\n  }\n}`)}
 
@@ -220,100 +166,45 @@ ${renderEndpoint('GET', '/logs/:tenantId/email/:emailCode', 'Get email detail',
   res.type('html').send(renderPage('MagicStack Email Service', body));
 });
 
-router.get('/payments', (_req: Request, res: Response) => {
-  const page = renderPage('Payments Docs', `
-    <header class="site-header">
-      <span class="base-url">${docsPath}</span>
-      <h1>Payments docs</h1>
-      <p>This endpoint creates a payment and stores the initial order state. The webhook later updates the same order row to <strong>succeeded</strong> or <strong>failed</strong>.</p>
-    </header>
+router.get('/template-help', (_req: Request, res: Response) => {
+  const helpPath = path.join(process.cwd(), '.github', 'use-template.md');
+  let markdown = '';
 
-    <nav class="site-nav">
-      <a href="${withBasePath('/')}">Home</a>
-      <a href="${withBasePath('/health')}">Health</a>
-      <a href="${withBasePath('/payment')}">Create payment</a>
-    </nav>
-
-    <main class="content-shell">
-      <section class="doc-card">
-        <div class="doc-card-header">
-          <span class="http-method POST">POST</span>
-          <div>
-            <div class="endpoint-path">/payment</div>
-            <div class="doc-card-title">Create a payment</div>
-          </div>
-        </div>
-        <div class="doc-card-body">
-          <p class="doc-card-description">Send your payment creation payload here. Include an order identifier, user id, and customer email so the row can be matched later by the webhook.</p>
-
-          <section class="surface">
-            <h3>Expected request fields</h3>
-            <table class="data-table">
-              <thead>
-                <tr><th>Field</th><th>Notes</th></tr>
-              </thead>
-              <tbody>
-                <tr><td><code>orderId</code></td><td>Required. Used as <code>orders.order_id</code>.</td></tr>
-                <tr><td><code>amount</code></td><td>Required. Sent to the payment service.</td></tr>
-                <tr><td><code>currency</code></td><td>Required. Example: <code>ZAR</code>.</td></tr>
-                <tr><td><code>customer.email</code></td><td>Required. Passed through to the payment service.</td></tr>
-                <tr><td><code>userId</code></td><td>Required. Stored in payment metadata.</td></tr>
-              </tbody>
-            </table>
-          </section>
-
-          <section class="surface">
-            <h3>Flow</h3>
-            <ol>
-              <li>The API forwards the request to the configured payments service.</li>
-              <li>The API stores a pending order row in the <code>orders</code> table.</li>
-              <li>The webhook updates the row when payment status changes.</li>
-            </ol>
-          </section>
-
-          <section class="surface">
-            <h3>Webhook</h3>
-            <p class="muted">Register this URL in the payment provider dashboard:</p>
-            <pre class="code-block">${withBasePath('/payment/webhook')}</pre>
-          </section>
-
-          <section class="surface">
-            <h3>Webhook payload shape</h3>
-            <pre class="code-block">{
-  "event": "charge.success",
-  "data": {
-    "id": 6181112847,
-    "status": "success",
-    "reference": "pay-...-ORDER-94-87",
-    "currency": "ZAR",
-    "metadata": {
-      "tenantId": "tenant-uuid",
-      "orderId": "ORDER-94",
-      "paymentId": "87",
-      "userId": "41",
-      "customerEmail": "cairnswm@gmail.com"
-    }
+  try {
+    markdown = fs.readFileSync(helpPath, 'utf8');
+  } catch {
+    markdown = '# Template Help\n\nTemplate help file not found at `.github/use-template.md`.\n';
   }
-}</pre>
-          </section>
 
-          <section class="surface">
-            <h3>Database schema</h3>
-            <pre class="code-block">${ordersTableSql.trim()}</pre>
-          </section>
+  const body = `
+<header class="site-header">
+  <span class="base-url">${docsPath}</span>
+  <h1>Template Help</h1>
+  <p>Reference guide for the advanced template language and render options.</p>
+</header>
 
-          <section class="surface note">
-            <h3>Webhook logs table</h3>
-            <p class="muted">This table stores each incoming webhook message as text for debugging.</p>
-            <pre class="code-block">${paymentWebhookTableSql.trim()}</pre>
-            <p class="muted">The <code>metadata</code> column stores the webhook payload for audit and debugging.</p>
-          </section>
-        </div>
-      </section>
-    </main>
-  `);
+<nav class="site-nav" style="margin-bottom:0;border-bottom:1px solid #e5e7eb;padding-bottom:1rem;">
+  <a href="${withBasePath('/docs/send')}">Send Email</a>
+  <a href="${withBasePath('/docs/templates')}">Templates</a>
+  <a href="${withBasePath('/docs/logs')}">Logs</a>
+  <a href="${withBasePath('/docs/template-help')}" style="font-weight:600;color:#2d7a2d;">Template Help</a>
+</nav>
 
-  res.type('html').send(page);
+<main class="content-shell stack">
+  <section class="doc-card">
+    <div class="doc-card-header">
+      <div>
+        <div class="endpoint-path">${withBasePath('/docs/template-help')}</div>
+        <div class="doc-card-title">use-template.md</div>
+      </div>
+    </div>
+    <div class="doc-card-body stack">
+      <pre class="code-block">${escHtml(markdown)}</pre>
+    </div>
+  </section>
+</main>`;
+
+  res.type('html').send(renderPage('Template Help', body));
 });
 
 export default router;

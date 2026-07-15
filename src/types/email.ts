@@ -45,5 +45,5 @@ export interface SendTemplateEmailRequest {
   bcc?: EmailRecipient[];
   attachments?: EmailAttachment[];
   images?: EmailImage[];
-  parameters: Record<string, string | number | boolean | null>;
+  parameters: Record<string, unknown>;
 }

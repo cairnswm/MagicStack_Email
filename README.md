@@ -45,8 +45,6 @@ These are the initial endpoints, add and modify as required
 - `GET /<serverpath>/` - Returns `{ "status": "node js app running" }`
 - `GET /<serverpath>/health` - Returns `{ "status": "ok" }`
 - `GET /<serverpath>/db/health` - Database health check endpoint that validates database connection
-- `POST /<serverpath>/payment` - Proxies payment creation to the configured payments API
-- `POST /<serverpath>/payment/webhook` - Receives payment webhook events and updates the `orders` table
 
 ### Email Send
 
@@ -68,15 +66,6 @@ All endpoints require `X-Tenant-ID`, `X-APIKEY`, and `X-Hostname` headers.
 - `GET /<serverpath>/logs/:tenantId/email` - Paginated email list; supports `status`, `templateCode`, `fromDate`, `toDate`, `page`, and `pageSize` query filters
 - `GET /<serverpath>/logs/:tenantId/email/:emailCode` - Full email record including recipients and events
 
-## Payments
-
-Set the following environment variables in `.env`:
-
-- `PAYMENTS_API` - Base URL for the payment service
-- `PAYMENTS_API_KEY` - API key used as `X-APIKEY`
-
-The webhook payload is stored in the `orders.metadata` column for audit purposes.
-
 ## HTTP Test Files
 
 All endpoints have corresponding [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) `.http` files in the `.http/` directory:
@@ -84,7 +73,6 @@ All endpoints have corresponding [REST Client](https://marketplace.visualstudio.
 ```
 .http/
   get-health.http               # GET /health
-  payments.http                 # POST /payment, POST /payment/webhook
   db/
     get-db-health.http          # GET /db/health
   property/

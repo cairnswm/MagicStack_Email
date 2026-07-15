@@ -1,0 +1,162 @@
+# Render Template Validation
+# Description: Validates the advanced template language using an invoice/order example.
+# Usage:
+# 1) Run "Create complex invoice template" once.
+# 2) Run render requests by slug or inline template.
+
+@baseUrl = http://localhost:3076
+@prodUrl = https://email.magicrunez.com
+@tenantId = f63421a5-f5b2-11f0-937d-1a220d8ac2c9
+@apiKey = your-api-key
+@hostname = localhost
+@templateSlug = invoice-order-email
+@templateId = 1
+
+### Create complex invoice template for render testing
+POST {{baseUrl}}/template
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "code": "invoice-order-email",
+  "name": "Invoice Order Email",
+  "description": "Covers all template language variations",
+  "subjectTemplate": "Invoice {{ order.reference ?? \"N/A\" }} - {{ order.paid ? \"Paid\" : \"Payment Required\" }}",
+  "htmlTemplate": "<p>Hello {{ customer.first_name ?? \"Customer\" }},</p>\n\n{{#if order.reference}}\n<p>Your order <strong>{{ order.reference }}</strong> has been received.</p>\n{{/if}}\n\n{{#if order.total >= 1000}}\n<p>This order qualifies for free delivery.</p>\n{{else}}\n<p>Delivery charges may apply.</p>\n{{/if}}\n\n<p>Summary status: {{ order.paid ? \"Payment received\" : \"Payment required\" }}</p>\n<p>Contact check: {{ customer.email && customer.first_name ? \"Complete\" : \"Incomplete\" }}</p>\n<p>Phone fallback: {{ customer.email || customer.phone || \"No contact method\" }}</p>\n<p>Review flag: {{ !order.manual_review ? \"No manual review\" : \"Manual review required\" }}</p>\n\n<ul>\n{{#each order.items as item}}\n<li>\n{{ item.quantity }} x {{ item.name }} - {{ item.price * item.quantity ?? 0 }}\n{{#if item.quantity > 1}}\n(multiple units)\n{{else}}\n(single unit)\n{{/if}}\n</li>\n{{/each}}\n</ul>\n\n<p>Tax: {{ order.tax ?? 0 }}</p>\n<p>Subtotal: {{ order.subtotal ?? 0 }}</p>\n<p>Discount impact: {{ (order.discount * 1) ?? 0 }}</p>\n<p>Grand total: {{ (order.subtotal + order.tax) - order.discount ?? 0 }}</p>\n<p>Division safety: {{ order.subtotal / order.divisor ?? 0 }}</p>\n\n<p>Item count label: {{ order.items.length > 1 ? \"multiple items\" : \"one item\" }}</p>\n<p>Country check: {{ customer.country != \"ZA\" ? \"International\" : \"Domestic\" }}</p>\n<p>Order equality check: {{ order.status == \"paid\" ? \"Closed\" : \"Open\" }}</p>\n\n<p>Regards,<br>{{ company.name }}</p>"
+}
+
+### Render stored template by slug
+POST {{baseUrl}}/template/render
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "slug": "{{templateSlug}}",
+  "data": {
+    "customer": {
+      "first_name": "Amina",
+      "email": "amina@example.com",
+      "phone": "",
+      "country": "US"
+    },
+    "company": {
+      "name": "MagicStack"
+    },
+    "order": {
+      "reference": "ORD-1042",
+      "paid": true,
+      "manual_review": false,
+      "subtotal": 100,
+      "tax": 30,
+      "discount": 10,
+      "divisor": 0,
+      "status": "paid",
+      "total": 1200,
+      "items": [
+        {
+          "name": "Notebook",
+          "price": 50,
+          "quantity": 2
+        },
+        {
+          "name": "Pen",
+          "price": 20,
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "options": {
+    "removeSpaceBeforePunctuation": true,
+    "removeEmptyLines": true
+  }
+}
+
+### Render stored template by id
+POST {{baseUrl}}/template/render
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "id": {{templateId}},
+  "data": {
+    "customer": {
+      "first_name": "Amina",
+      "email": "amina@example.com",
+      "phone": "",
+      "country": "ZA"
+    },
+    "company": {
+      "name": "MagicStack"
+    },
+    "order": {
+      "reference": "ORD-1042",
+      "paid": false,
+      "manual_review": true,
+      "subtotal": 100,
+      "tax": 30,
+      "discount": 10,
+      "divisor": 2,
+      "status": "pending",
+      "total": 300,
+      "items": [
+        {
+          "name": "Notebook",
+          "price": 50,
+          "quantity": 2
+        }
+      ]
+    }
+  }
+}
+
+### Render inline template (no id or slug)
+POST {{prodUrl}}/template/render
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "template": "Invoice Preview\n==============\n\nCustomer: {{ customer.first_name ?? \"Customer\" }}\nReference: {{ order.reference ?? \"N/A\" }}\nStatus: {{ order.paid ? \"Paid\" : \"Payment required\" }}\n\nItems:\n{{#each order.items as item}}- {{ item.quantity }} x {{ item.name }} = {{ item.quantity * item.price ?? 0 }}\n{{/each}}\nSubtotal: {{ order.subtotal ?? 0 }}\nTax: {{ order.tax ?? 0 }}\nDiscount: {{ order.discount ?? 0 }}\nTotal: {{ (order.subtotal + order.tax) - order.discount ?? 0 }}\n",
+  "data": {
+    "customer": {
+      "first_name": "Amina"
+    },
+    "order": {
+      "reference": "ORD-1042",
+      "paid": true,
+      "subtotal": 130,
+      "tax": 30,
+      "discount": 10,
+      "items": [
+        {
+          "name": "Notebook",
+          "price": 50,
+          "quantity": 2
+        },        
+        {
+          "name": "Keyboard",
+          "price": 10,
+          "quantity": 1
+        },        
+        {
+          "name": "Mouse",
+          "price": 5,
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "options": {
+    "removeSpaceBeforePunctuation": false,
+    "removeEmptyLines": false,
+    "collapseWhitespace": false
+  }
+}

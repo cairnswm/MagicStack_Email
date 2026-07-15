@@ -5,8 +5,10 @@ import healthRouter from './routes/health';
 import tenantMiddleware from './middleware/tenantMiddleware';
 import tenantRouter from './routes/tenant';
 import sampleRouter from './routes/sample';
-import paymentRouter from './routes/payment';
 import docsRouter from './routes/docs';
+import docsEmailTransactionalRouter from './routes/docsEmailTransactional';
+import docsEmailTemplatesRouter from './routes/docsEmailTemplates';
+import docsEmailLogsRouter from './routes/docsEmailLogs';
 import sendRouter from './routes/send';
 import templateRouter from './routes/template';
 import logsRouter from './routes/logs';
@@ -65,12 +67,14 @@ app.use((req: Request, res: Response, next) => {
 app.use(`${BASE_PATH}/db`, dbRouter);
 app.use(`${BASE_PATH}/tenant`, tenantRouter);
 app.use(`${BASE_PATH}/sample`, sampleRouter);
-app.use(`${BASE_PATH}/payment`, paymentRouter);
 app.use(`${BASE_PATH}/send`, sendRouter);
 app.use(`${BASE_PATH}/template`, templateRouter);
 app.use(`${BASE_PATH}/logs`, logsRouter);
 app.use(BASE_PATH || '/', docsRouter);
 app.use(`${BASE_PATH}/docs`, docsRouter);
+app.use(`${BASE_PATH}/docs/send`, docsEmailTransactionalRouter);
+app.use(`${BASE_PATH}/docs/templates`, docsEmailTemplatesRouter);
+app.use(`${BASE_PATH}/docs/logs`, docsEmailLogsRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
