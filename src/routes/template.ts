@@ -2,7 +2,9 @@ import { Router, Request, Response } from 'express';
 import { withConnection } from '../utils/db';
 import { getTenantId } from '../utils/tenant';
 import { errorResponse, successResponse } from '../utils/formatters';
+import { isTemplateDebugEnabled, parseTemplateConfig, serializeTemplateConfig } from '../services/templateConfig';
 import { renderTemplate, RenderTemplateOptions, TemplateObject } from '../services/templateRenderer';
+import { loadActiveTemplateParts } from '../services/templateParts';
 
 const router = Router();
 
@@ -30,22 +32,24 @@ async function renderTemplatePreview(req: Request, res: Response, body: Template
   }
 
   if (id !== undefined || slug) {
-    const rows = await withConnection(async (conn) => {
+    const { rows, templateParts } = await withConnection(async (conn) => {
+      const templateParts = await loadActiveTemplateParts(conn, tenantId);
+
       if (id !== undefined) {
         const [result] = await conn.query(
-          `SELECT id, code, subject_template, html_template
+          `SELECT id, code, subject_template, html_template, config_json
            FROM email_template WHERE tenant_id = ? AND id = ? LIMIT 1`,
           [tenantId, id],
         );
-        return result as any[];
+        return { rows: result as any[], templateParts };
       }
 
       const [result] = await conn.query(
-        `SELECT id, code, subject_template, html_template
+        `SELECT id, code, subject_template, html_template, config_json
          FROM email_template WHERE tenant_id = ? AND code = ? LIMIT 1`,
         [tenantId, slug],
       );
-      return result as any[];
+      return { rows: result as any[], templateParts };
     });
 
     if (rows.length === 0) {
@@ -53,10 +57,17 @@ async function renderTemplatePreview(req: Request, res: Response, body: Template
     }
 
     const template = rows[0];
-    const renderedSubject = renderTemplate(template.subject_template as string, renderData, body.options);
+    const templateConfig = parseTemplateConfig(template.config_json);
+    const renderedSubject = renderTemplate(template.subject_template as string, renderData, {
+      ...(body.options || {}),
+      debugMissingParts: isTemplateDebugEnabled(templateConfig),
+      templateParts,
+    });
     const renderedHtml = renderTemplate(template.html_template as string, renderData, {
       ...(body.options || {}),
+      debugMissingParts: isTemplateDebugEnabled(templateConfig),
       escapeHtml: body.options?.escapeHtml ?? true,
+      templateParts,
     });
 
     return res.json(successResponse({
@@ -69,7 +80,11 @@ async function renderTemplatePreview(req: Request, res: Response, body: Template
     }));
   }
 
-  const rendered = renderTemplate(inlineTemplate as string, renderData, body.options);
+  const templateParts = await withConnection(async (conn) => loadActiveTemplateParts(conn, tenantId));
+  const rendered = renderTemplate(inlineTemplate as string, renderData, {
+    ...(body.options || {}),
+    templateParts,
+  });
   return res.json(successResponse({
     source: 'inline',
     rendered,
@@ -107,7 +122,7 @@ router.get('/:code', async (req: Request, res: Response) => {
     const code = req.params.code;
     const rows = await withConnection(async (conn) => {
       const [result] = await conn.query(
-        `SELECT id, code, name, description, subject_template, html_template, is_active, created_at, updated_at
+        `SELECT id, code, name, description, subject_template, html_template, config_json, is_active, created_at, updated_at
          FROM email_template WHERE tenant_id = ? AND code = ? LIMIT 1`,
         [tenantId, code],
       );
@@ -117,6 +132,7 @@ router.get('/:code', async (req: Request, res: Response) => {
       return res.status(404).json(errorResponse(`Template '${code}' not found`));
     }
     const r = rows[0];
+    const config = parseTemplateConfig(r.config_json);
     return res.json(successResponse({
       id: r.id as number,
       code: r.code as string,
@@ -124,6 +140,7 @@ router.get('/:code', async (req: Request, res: Response) => {
       description: r.description as string | undefined,
       subjectTemplate: r.subject_template as string,
       htmlTemplate: r.html_template as string,
+      config,
       isActive: r.is_active === 1,
       createdAt: r.created_at as string,
       updatedAt: r.updated_at as string,
@@ -158,23 +175,26 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     const tenantId = getTenantId(req);
-    const { code, name, description, subjectTemplate, htmlTemplate } = req.body as {
+    const { code, name, description, subjectTemplate, htmlTemplate, config } = req.body as {
       code?: string;
       name?: string;
       description?: string;
       subjectTemplate?: string;
       htmlTemplate?: string;
+      config?: Record<string, unknown>;
     };
 
     if (!code || !name || !subjectTemplate || !htmlTemplate) {
       return res.status(400).json(errorResponse('code, name, subjectTemplate, and htmlTemplate are required'));
     }
 
+    const configJson = serializeTemplateConfig(config);
+
     const insertId = await withConnection(async (conn) => {
       const [result] = await conn.query(
-        `INSERT INTO email_template (tenant_id, code, name, description, subject_template, html_template)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [tenantId, code, name, description || null, subjectTemplate, htmlTemplate],
+        `INSERT INTO email_template (tenant_id, code, name, description, subject_template, html_template, config_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [tenantId, code, name, description || null, subjectTemplate, htmlTemplate, configJson],
       );
       return (result as any).insertId as number;
     });
@@ -193,11 +213,12 @@ router.put('/:code', async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
     const code = req.params.code;
-    const { name, description, subjectTemplate, htmlTemplate, isActive } = req.body as {
+    const { name, description, subjectTemplate, htmlTemplate, config, isActive } = req.body as {
       name?: string;
       description?: string;
       subjectTemplate?: string;
       htmlTemplate?: string;
+      config?: Record<string, unknown> | null;
       isActive?: boolean;
     };
 
@@ -207,6 +228,7 @@ router.put('/:code', async (req: Request, res: Response) => {
     if (description !== undefined) { fields.push('description = ?'); values.push(description); }
     if (subjectTemplate !== undefined) { fields.push('subject_template = ?'); values.push(subjectTemplate); }
     if (htmlTemplate !== undefined) { fields.push('html_template = ?'); values.push(htmlTemplate); }
+    if (config !== undefined) { fields.push('config_json = ?'); values.push(serializeTemplateConfig(config)); }
     if (isActive !== undefined) { fields.push('is_active = ?'); values.push(isActive ? 1 : 0); }
 
     if (fields.length === 0) {

@@ -10,13 +10,17 @@ function withBasePath(path: string): string {
   return `${basePath}${path}` || path;
 }
 
-function renderPage(title: string, body: string): string {
+function renderPage(title: string, body: string, faviconUrl = ''): string {
+  const faviconTag = faviconUrl
+    ? `<link rel="icon" type="image/svg+xml" href="${faviconUrl}" />`
+    : '';
   return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${title}</title>
+    ${faviconTag}
     <link rel="stylesheet" href="https://cdn.runeworkz.com/styles.css" />
   </head>
   <body class="app-shell">${body}</body>
@@ -67,9 +71,11 @@ router.get('/', (_req: Request, res: Response) => {
 });
 
 router.get('/overview', (_req: Request, res: Response) => {
+  const logoUrl = withBasePath('/email.svg');
   const body = `
 <header class="site-header">
   <span class="base-url">${basePath || '/'}</span>
+  <img src="${logoUrl}" alt="" style="width:2rem;height:2rem;vertical-align:middle;margin-right:0.5rem;" />
   <h1>MagicStack Email Service</h1>
   <p>Multi-tenant email delivery platform with provider abstraction, template rendering, and activity logging.</p>
 </header>
@@ -198,10 +204,11 @@ ${renderEndpoint('GET', '/logs/:tenantId/email/:emailCode', 'Get email detail',
     }
   });
 </script>`;
-  res.type('html').send(renderPage('MagicStack Email Service', body));
+  res.type('html').send(renderPage('MagicStack Email Service', body, logoUrl));
 });
 
 router.get('/template-help', (_req: Request, res: Response) => {
+  const logoUrl = withBasePath('/email.svg');
   const helpPath = path.join(process.cwd(), '.github', 'use-template.md');
   let markdown = '';
 
@@ -240,7 +247,7 @@ router.get('/template-help', (_req: Request, res: Response) => {
   </section>
 </main>`;
 
-  res.type('html').send(renderPage('Template Help', body));
+  res.type('html').send(renderPage('Template Help', body, logoUrl));
 });
 
 export default router;

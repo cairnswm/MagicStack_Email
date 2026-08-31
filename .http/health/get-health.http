@@ -1,0 +1,7 @@
+GET http://localhost:3076/health
+
+###
+GET http://localhost:3076/health/db
+
+###
+GET http://localhost:3076/health/services

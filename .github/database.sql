@@ -6,6 +6,7 @@ CREATE TABLE email_template (
     description TEXT NULL,
     subject_template TEXT NOT NULL,
     html_template LONGTEXT NOT NULL,
+    config_json LONGTEXT NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -13,6 +14,22 @@ CREATE TABLE email_template (
     UNIQUE KEY idx_template_tenant_code (tenant_id, code),
     KEY idx_template_tenant (tenant_id),
     KEY idx_template_active (tenant_id, is_active)
+);
+
+CREATE TABLE email_template_part (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    tenant_id VARCHAR(100) NOT NULL,
+    code VARCHAR(100) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT NULL,
+    content_template LONGTEXT NOT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY idx_template_part_tenant_code (tenant_id, code),
+    KEY idx_template_part_tenant (tenant_id),
+    KEY idx_template_part_active (tenant_id, is_active)
 );
 
 CREATE TABLE email (

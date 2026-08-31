@@ -71,6 +71,37 @@ Data values are inserted as plain text and are not processed as template syntax.
 
 ---
 
+## Template Parts
+
+Use a tenant-scoped template part to include reusable content:
+
+```text
+{{part.header}}
+```
+
+Parts are rendered as template content, so a part may contain its own placeholders, `if` blocks, and `each` blocks.
+
+If the part does not exist or is inactive, it renders as empty output.
+
+You may provide a nullish-style fallback when a part is missing:
+
+```text
+{{part.header ?? "[missing part: header]"}}
+```
+
+Fallback rules:
+
+* The fallback is used only when the part is missing.
+* Without a fallback, a missing part renders as empty output.
+* The fallback is evaluated as a normal expression.
+* Circular part references are not allowed.
+
+Template debug mode may override the default silent behavior for missing parts. If the parent email template has `config_json` with `{"debug":1}`, missing parts without a fallback render a visible marker instead.
+
+Supported debug-enabled values are `true`, `1`, `"1"`, and `"true"`.
+
+---
+
 ## Default Values
 
 Use the nullish fallback operator `??`:
@@ -83,10 +114,11 @@ The fallback is used when the value is `null` or `undefined`.
 
 An empty string, `false`, or `0` does not trigger the fallback.
 
-Fallback values are literal values:
+Fallback values may be literals or expressions:
 
 ```text
 {{ title ?? "Order confirmation" }}
+{{ order.discount ?? customer.default_discount ?? 0 }}
 ```
 
 ---
@@ -157,7 +189,11 @@ customer.country != "ZA"
 
 Comparisons return a boolean and are normally used in ternary expressions or conditional blocks.
 
-Use `==` for equality. Strict JavaScript-style `===` and `!==` are not supported.
+Use `==` and `!=` syntax for equality checks.
+
+Comparison behavior is strict by type (for example, `1` is not equal to `"1"`).
+
+Strict JavaScript-style `===` and `!==` tokens are not supported.
 
 ---
 
@@ -347,7 +383,17 @@ HTML templates should preserve intentional formatting by default.
 
 ## Escaping
 
-For HTML templates, inserted values should be HTML-escaped by default.
+Escaping is controlled by the renderer option `escapeHtml`.
+
+When `escapeHtml` is enabled, inserted values and fallback output are HTML-escaped.
+
+When `escapeHtml` is disabled, values are inserted as plain text.
+
+In this service:
+
+* Stored HTML templates are rendered with escaping enabled.
+* Subject templates are rendered without HTML escaping.
+* Inline preview templates use the provided render options; if omitted, escaping is disabled.
 
 The language does not provide raw HTML insertion. Trusted HTML should be added through controlled template content rather than configuration values.
 

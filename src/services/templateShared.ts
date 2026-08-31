@@ -1,10 +1,12 @@
 type TemplateScalar = string | number | boolean | null | undefined;
 type TemplateValue = TemplateScalar | TemplateObject | TemplateValue[];
 type TemplateObject = { [key: string]: TemplateValue };
+type TemplatePartMap = Record<string, string>;
 
 interface RenderContext {
   data: TemplateObject;
   aliases: Record<string, TemplateValue>;
+  partStack: string[];
 }
 
 interface RenderTemplateOptions {
@@ -12,6 +14,9 @@ interface RenderTemplateOptions {
   removeSpaceBeforePunctuation?: boolean;
   removeEmptyLines?: boolean;
   collapseWhitespace?: boolean;
+  templateParts?: TemplatePartMap;
+  maxPartDepth?: number;
+  debugMissingParts?: boolean;
 }
 
 class TemplateRenderError extends Error {
@@ -66,6 +71,7 @@ export {
 
 export type {
   RenderContext,
+  TemplatePartMap,
   RenderTemplateOptions,
   TemplateObject,
   TemplateScalar,

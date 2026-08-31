@@ -1,0 +1,117 @@
+# Template Testing - Code: test
+# Purpose: Exercise template rendering and sending with realistic person-focused data.
+# Assumes template code "test" already exists and is active for this tenant.
+
+@baseUrl = http://localhost:3076
+@tenantId = ecc8f32a-7c21-11f1-9b18-00505661e513
+@apiKey = 18e42bf4-80d6-11f1-9b18-00505661e513
+@hostname = localhost
+@templateCode = test
+@userId = 57
+
+### 1) Preview render of stored template "test"
+POST {{baseUrl}}/template/render
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "slug": "{{templateCode}}",
+  "data": {
+    "person": {
+      "firstName": "Maya",
+      "lastName": "Singh",
+      "email": "maya.singh@example.com",
+      "phone": "+27 82 555 0191",
+      "preferredContactMethod": "email"
+    },
+    "case": {
+      "reference": "CS-2026-0913",
+      "topic": "Document verification update",
+      "status": "Action Required",
+      "dueDate": "2026-07-20",
+      "portalUrl": "https://portal.example.com/cases/CS-2026-0913"
+    },
+    "company": {
+      "name": "MagicStack Services",
+      "supportEmail": "support@magicstack.example"
+    }
+  },
+  "options": {
+    "escapeHtml": true,
+    "removeEmptyLines": true
+  }
+}
+
+### 2) Send email using stored template "test"
+POST {{baseUrl}}/send/{{templateCode}}
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "to": [
+    { "email": "maya.singh@example.com" }
+  ],
+  "cc": [],
+  "bcc": [],
+  "parameters": {
+    "person": {
+      "firstName": "Maya",
+      "lastName": "Singh",
+      "email": "maya.singh@example.com",
+      "phone": "+27 82 555 0191",
+      "preferredContactMethod": "email"
+    },
+    "case": {
+      "reference": "CS-2026-0913",
+      "topic": "Document verification update",
+      "status": "Action Required",
+      "dueDate": "2026-07-20",
+      "portalUrl": "https://portal.example.com/cases/CS-2026-0913"
+    },
+    "company": {
+      "name": "MagicStack Services",
+      "supportEmail": "support@magicstack.example"
+    }
+  },
+  "attachments": [],
+  "images": []
+}
+
+### 3) Send email using userId recipient
+POST {{baseUrl}}/send/{{templateCode}}
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+
+{
+  "to": [
+    { "userId": "{{userId}}" }
+  ],
+  "cc": [],
+  "bcc": [],
+  "parameters": {
+    "person": {
+      "firstName": "Maya",
+      "lastName": "Singh",
+      "preferredContactMethod": "email"
+    },
+    "case": {
+      "reference": "CS-2026-0913",
+      "topic": "Document verification update",
+      "status": "Action Required",
+      "dueDate": "2026-07-20",
+      "portalUrl": "https://portal.example.com/cases/CS-2026-0913"
+    },
+    "company": {
+      "name": "MagicStack Services",
+      "supportEmail": "support@magicstack.example"
+    }
+  },
+  "attachments": [],
+  "images": []
+}

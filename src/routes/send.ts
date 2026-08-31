@@ -17,7 +17,9 @@ import {
 } from '../services/emailService';
 import { sendViaProvider, SmtpConfig } from '../providers/emailProvider';
 import { fetchApiKeyProperty } from '../utils/authClient';
+import { isTemplateDebugEnabled, parseTemplateConfig } from '../services/templateConfig';
 import { renderTemplate, TemplateObject } from '../services/templateRenderer';
+import { loadActiveTemplateParts } from '../services/templateParts';
 
 const router = Router();
 
@@ -206,12 +208,13 @@ router.post('/:templateCode', async (req: Request, res: Response) => {
   }
 
   try {
-    const rows = await withConnection(async (conn) => {
+    const { rows, templateParts } = await withConnection(async (conn) => {
+      const templateParts = await loadActiveTemplateParts(conn, tenantId);
       const [result] = await conn.query(
-        `SELECT id, subject_template, html_template FROM email_template WHERE tenant_id = ? AND code = ? AND is_active = 1 LIMIT 1`,
+        `SELECT id, subject_template, html_template, config_json FROM email_template WHERE tenant_id = ? AND code = ? AND is_active = 1 LIMIT 1`,
         [tenantId, templateCode],
       );
-      return result as any[];
+      return { rows: result as any[], templateParts };
     });
 
     if (rows.length === 0) {
@@ -219,9 +222,17 @@ router.post('/:templateCode', async (req: Request, res: Response) => {
     }
 
     const template = rows[0];
+    const templateConfig = parseTemplateConfig(template.config_json);
     const renderData = body.parameters as TemplateObject;
-    const subject = renderTemplate(template.subject_template as string, renderData);
-    const htmlBody = renderTemplate(template.html_template as string, renderData, { escapeHtml: true });
+    const subject = renderTemplate(template.subject_template as string, renderData, {
+      debugMissingParts: isTemplateDebugEnabled(templateConfig),
+      templateParts,
+    });
+    const htmlBody = renderTemplate(template.html_template as string, renderData, {
+      debugMissingParts: isTemplateDebugEnabled(templateConfig),
+      escapeHtml: true,
+      templateParts,
+    });
 
     return processSend(req, res, subject, htmlBody, body, template.id as number, templateCode, body.parameters);
   } catch (err) {

@@ -34,6 +34,33 @@ Use `??` for null/undefined fallback:
 
 Fallback only triggers for `null` or `undefined`, not for `0`, `false`, or empty string.
 
+### 2a. Reusable Template Parts
+
+Use a tenant-scoped template part to insert reusable content:
+
+```text
+{{part.header}}
+{{part.footer}}
+```
+
+Parts are resolved as template fragments, not as normal data values. That means a part can contain its own placeholders and control blocks.
+
+Missing parts render as empty output by default:
+
+```text
+{{part.disclaimer}}
+```
+
+You can provide a fallback expression when a part is missing:
+
+```text
+{{part.disclaimer ?? "[missing disclaimer]"}}
+```
+
+The fallback is evaluated with the normal expression rules, which is useful for previews or test sends that should make missing parts visible.
+
+If the stored email template has `config.debug = 1`, missing parts without a fallback render a visible debug marker instead of an empty string. This is useful when diagnosing nested includes such as `part.header` including `part.logo`.
+
 ### 3. Calculations
 
 Simple arithmetic is supported:

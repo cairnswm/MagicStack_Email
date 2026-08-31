@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc && npm run copy-files",
-    "copy-files": "node -e \"require('fs').cpSync('package.json', 'dist/package.json'); require('fs').cpSync('.env', 'dist/.env')\"",
+    "copy-files": "node -e \"const fs=require('fs'); fs.cpSync('package.json', 'dist/package.json'); fs.cpSync('.env', 'dist/.env'); fs.cpSync('public', 'dist/public', { recursive: true })\"",
     "start": "node dist/index.js",
     "deploy": "node scripts/deploy.js",
     "publish": "npm run build && npm run deploy",
+    "predev": "node scripts/predev.js",
     "dev": "nodemon --watch src --ext ts,js --exec \"ts-node -r dotenv/config src/index.ts\""
   },
   "dependencies": {

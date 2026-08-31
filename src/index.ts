@@ -20,9 +20,13 @@ const BASE_PATH = (process.env.BASE_PATH || '/').replace(/\/$/, '');
 
 app.use(express.json());
 app.use(express.static('public'));
+if (BASE_PATH) {
+  app.use(BASE_PATH, express.static('public'));
+}
 
 // Health routes are public — register before tenantMiddleware
 app.use(`${BASE_PATH}/health`, healthRouter);
+app.use(`${BASE_PATH}/db`, dbRouter);
 
 // Attach tenant / auth helpers to every request
 app.use(tenantMiddleware as any);
@@ -65,7 +69,6 @@ app.use((req: Request, res: Response, next) => {
   next();
 });
 
-app.use(`${BASE_PATH}/db`, dbRouter);
 app.use(`${BASE_PATH}/tenant`, tenantRouter);
 app.use(`${BASE_PATH}/sample`, sampleRouter);
 app.use(`${BASE_PATH}/send`, sendRouter);

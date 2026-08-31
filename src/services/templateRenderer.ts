@@ -15,8 +15,19 @@ import type {
 type TemplateNode =
   | { type: 'text'; value: string }
   | { type: 'expr'; expression: string }
+  | { type: 'part'; partCode: string; fallbackExpression?: string }
   | { type: 'if'; condition: string; thenNodes: TemplateNode[]; elseNodes: TemplateNode[] }
   | { type: 'each'; source: string; alias: string; body: TemplateNode[] };
+
+function parsePartExpression(rawTag: string): { partCode: string; fallbackExpression?: string } | null {
+  const match = rawTag.match(/^part\.([^\s}]+?)(?:\s*\?\?\s*(.+))?$/);
+  if (!match) return null;
+
+  return {
+    partCode: match[1].trim(),
+    fallbackExpression: match[2]?.trim(),
+  };
+}
 
 function parseNodes(template: string, start = 0, stopOn?: string, inEach = false): { nodes: TemplateNode[]; index: number; endedBy?: string } {
   const nodes: TemplateNode[] = [];
@@ -81,11 +92,59 @@ function parseNodes(template: string, start = 0, stopOn?: string, inEach = false
       throw new TemplateRenderError(`Unexpected block tag '{{${rawTag}}}'`);
     }
 
+    const partExpression = parsePartExpression(rawTag);
+    if (partExpression) {
+      nodes.push({ type: 'part', partCode: partExpression.partCode, fallbackExpression: partExpression.fallbackExpression });
+      continue;
+    }
+
     nodes.push({ type: 'expr', expression: rawTag });
   }
 
   if (stopOn) throw new TemplateRenderError(`Missing closing tag '{{${stopOn}}}'`);
   return { nodes, index };
+}
+
+function renderFallbackExpression(expression: string | undefined, ctx: RenderContext, options: Required<RenderTemplateOptions>): string {
+  if (!expression) return '';
+
+  const value = evaluateExpression(expression, ctx);
+  if (value === null || value === undefined) return '';
+
+  const text = String(value);
+  return options.escapeHtml ? escapeHtml(text) : text;
+}
+
+function renderTemplatePart(partCode: string, fallbackExpression: string | undefined, ctx: RenderContext, options: Required<RenderTemplateOptions>): string {
+  const partTemplate = options.templateParts[partCode];
+
+  if (partTemplate === undefined) {
+    if (fallbackExpression) {
+      return renderFallbackExpression(fallbackExpression, ctx, options);
+    }
+
+    if (options.debugMissingParts) {
+      const debugMessage = `[missing template part: ${partCode}]`;
+      return options.escapeHtml ? escapeHtml(debugMessage) : debugMessage;
+    }
+
+    return '';
+  }
+
+  if (ctx.partStack.includes(partCode)) {
+    throw new TemplateRenderError(`Circular template part reference: ${[...ctx.partStack, partCode].join(' -> ')}`);
+  }
+
+  if (ctx.partStack.length >= options.maxPartDepth) {
+    throw new TemplateRenderError(`Template part nesting exceeds maximum depth of ${options.maxPartDepth}`);
+  }
+
+  const { nodes } = parseNodes(partTemplate);
+  return renderNodes(nodes, {
+    data: ctx.data,
+    aliases: ctx.aliases,
+    partStack: [...ctx.partStack, partCode],
+  }, options);
 }
 
 function renderNodes(nodes: TemplateNode[], ctx: RenderContext, options: Required<RenderTemplateOptions>): string {
@@ -105,6 +164,11 @@ function renderNodes(nodes: TemplateNode[], ctx: RenderContext, options: Require
       continue;
     }
 
+    if (node.type === 'part') {
+      output += renderTemplatePart(node.partCode, node.fallbackExpression, ctx, options);
+      continue;
+    }
+
     if (node.type === 'if') {
       const condition = evaluateExpression(node.condition, ctx);
       output += renderNodes(isTruthy(condition) ? node.thenNodes : node.elseNodes, ctx, options);
@@ -114,7 +178,11 @@ function renderNodes(nodes: TemplateNode[], ctx: RenderContext, options: Require
     const sourceValue = resolvePath(node.source, ctx);
     if (!Array.isArray(sourceValue) || sourceValue.length === 0) continue;
     for (const item of sourceValue as TemplateValue[]) {
-      output += renderNodes(node.body, { data: ctx.data, aliases: { ...ctx.aliases, [node.alias]: item } }, options);
+      output += renderNodes(node.body, {
+        data: ctx.data,
+        aliases: { ...ctx.aliases, [node.alias]: item },
+        partStack: ctx.partStack,
+      }, options);
     }
   }
 
@@ -141,10 +209,13 @@ function renderTemplate(template: string, data: TemplateObject, options?: Render
     removeSpaceBeforePunctuation: options?.removeSpaceBeforePunctuation ?? false,
     removeEmptyLines: options?.removeEmptyLines ?? false,
     collapseWhitespace: options?.collapseWhitespace ?? false,
+    templateParts: options?.templateParts ?? {},
+    maxPartDepth: options?.maxPartDepth ?? 10,
+    debugMissingParts: options?.debugMissingParts ?? false,
   };
 
   const { nodes } = parseNodes(template);
-  const rendered = renderNodes(nodes, { data, aliases: {} }, resolvedOptions);
+  const rendered = renderNodes(nodes, { data, aliases: {}, partStack: [] }, resolvedOptions);
   return applyWhitespaceOptions(rendered, resolvedOptions);
 }
 
