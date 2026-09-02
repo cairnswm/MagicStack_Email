@@ -208,6 +208,38 @@ router.post('/:templateCode', async (req: Request, res: Response) => {
   }
 
   try {
+    const prepared = await prepareTemplateRender(req, templateCode, body);
+    if (!prepared) return; // prepareTemplateRender handled response
+    const { subject, htmlBody, templateId, renderData } = prepared;
+
+    return processSend(req, res, subject, htmlBody, body, templateId, templateCode, renderData);
+  } catch (err) {
+    return res.status(500).json(errorResponse(err instanceof Error ? err.message : 'Unknown error'));
+  }
+});
+
+// POST /send/:templateCode/preview
+router.post('/:templateCode/preview', async (req: Request, res: Response) => {
+  const templateCode = req.params.templateCode;
+  const body = req.body as SendTemplateEmailRequest;
+  if (!body.parameters) {
+    return res.status(400).json(errorResponse('parameters are required'));
+  }
+
+  try {
+    const prepared = await prepareTemplateRender(req, templateCode, body);
+    if (!prepared) return; // prepareTemplateRender handled response
+
+    const { subject, htmlBody, renderData, templateId } = prepared;
+    return res.status(200).json(successResponse({ templateId, templateCode, subject, htmlBody, renderData }));
+  } catch (err) {
+    return res.status(500).json(errorResponse(err instanceof Error ? err.message : 'Unknown error'));
+  }
+});
+
+async function prepareTemplateRender(req: Request, templateCode: string, body: SendTemplateEmailRequest): Promise<{ subject: string; htmlBody: string; renderData: Record<string, unknown>; templateId: number } | void> {
+  const tenantId = getTenantId(req);
+  try {
     const { rows, templateParts } = await withConnection(async (conn) => {
       const templateParts = await loadActiveTemplateParts(conn, tenantId);
       const [result] = await conn.query(
@@ -218,7 +250,8 @@ router.post('/:templateCode', async (req: Request, res: Response) => {
     });
 
     if (rows.length === 0) {
-      return res.status(404).json(errorResponse(`Template '${templateCode}' not found`));
+      req.res?.status(404).json(errorResponse(`Template '${templateCode}' not found`));
+      return;
     }
 
     const template = rows[0];
@@ -234,10 +267,11 @@ router.post('/:templateCode', async (req: Request, res: Response) => {
       templateParts,
     });
 
-    return processSend(req, res, subject, htmlBody, body, template.id as number, templateCode, body.parameters);
+    return { subject, htmlBody, renderData, templateId: template.id as number };
   } catch (err) {
-    return res.status(500).json(errorResponse(err instanceof Error ? err.message : 'Unknown error'));
+    req.res?.status(500).json(errorResponse(err instanceof Error ? err.message : 'Unknown error'));
+    return;
   }
-});
+}
 
 export default router;
