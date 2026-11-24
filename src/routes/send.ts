@@ -46,6 +46,11 @@ async function processSend(
   const callerHostname = (req as any).callerHostname as string;
   const tenantUtils = (req as any).tenantUtils;
 
+  if (!apiKey) {
+    res.status(400).json(errorResponse('Missing required headers: X-APIKEY'));
+    return;
+  }
+
   const sendByEmail = await fetchApiKeyProperty(apiKey, tenantId, 'sendByEmail', callerHostname);
   const canSendByEmail = sendByEmail === 'true' || sendByEmail === '1';
   const canSendByUserId = true;

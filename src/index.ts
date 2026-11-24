@@ -3,6 +3,7 @@ import express, { Request, Response } from 'express';
 import dbRouter from './routes/db';
 import healthRouter from './routes/health';
 import tenantMiddleware from './middleware/tenantMiddleware';
+import requireEmailAdmin from './middleware/requireEmailAdmin';
 import tenantRouter from './routes/tenant';
 import sampleRouter from './routes/sample';
 import docsRouter from './routes/docs';
@@ -28,10 +29,8 @@ if (BASE_PATH) {
 app.use(`${BASE_PATH}/health`, healthRouter);
 app.use(`${BASE_PATH}/db`, dbRouter);
 
-// Attach tenant / auth helpers to every request
-app.use(tenantMiddleware as any);
-
-// CORS middleware
+// CORS middleware (must run before tenantMiddleware so preflight OPTIONS requests,
+// which carry no custom headers, are answered instead of rejected with 400)
 const corsHostsEnv = process.env.CORS_HOSTS || '';
 const corsHeadersEnv = process.env.CORS_HEADERS || '';
 // If CORS_HOSTS is set to the string 'true' (case-insensitive) we allow all hosts
@@ -69,11 +68,14 @@ app.use((req: Request, res: Response, next) => {
   next();
 });
 
+// Attach tenant / auth helpers to every request
+app.use(tenantMiddleware as any);
+
 app.use(`${BASE_PATH}/tenant`, tenantRouter);
 app.use(`${BASE_PATH}/sample`, sampleRouter);
 app.use(`${BASE_PATH}/send`, sendRouter);
-app.use(`${BASE_PATH}/template`, templateRouter);
-app.use(`${BASE_PATH}/logs`, logsRouter);
+app.use(`${BASE_PATH}/template`, requireEmailAdmin as any, templateRouter);
+app.use(`${BASE_PATH}/logs`, requireEmailAdmin as any, logsRouter);
 app.use(BASE_PATH || '/', docsRouter);
 app.use(`${BASE_PATH}/docs/config`, docsEmailConfigRouter);
 app.use(`${BASE_PATH}/docs`, docsRouter);

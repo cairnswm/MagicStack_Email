@@ -22,6 +22,18 @@ const OPEN_PATHS = new Set([
 // Any path that starts with one of these prefixes is also open (no headers required)
 const OPEN_PREFIXES = [`${basePath}/docs`];
 
+function hostFromOrigin(req: Request): string {
+  for (const value of [req.header('origin'), req.header('referer')]) {
+    if (!value) continue;
+    try {
+      return new URL(value).host;
+    } catch {
+      // ignore malformed value and try the next
+    }
+  }
+  return '';
+}
+
 export default function tenantMiddleware(req: Request, res: Response, next: NextFunction): void {
   // Skip header enforcement for open/health/docs paths
   if (OPEN_PATHS.has(req.path) || OPEN_PREFIXES.some(p => req.path.startsWith(p))) {
@@ -34,11 +46,15 @@ export default function tenantMiddleware(req: Request, res: Response, next: Next
   // Enforce the three required headers on every request
   const tenantId = req.header('x-tenant-id') || req.header('X-Tenant-ID') || '';
   const apiKey = req.header('x-apikey') || req.header('X-APIKEY') || '';
-  const callerHostname = req.header('x-hostname') || req.header('X-Hostname') || '';
+  const hasBearer = !!(req.header('authorization') || '').trim();
+  // With a JWT the caller is identified by the token: X-APIKEY is optional and the
+  // hostname can be derived from the browser's Origin / Referer.
+  const callerHostname =
+    req.header('x-hostname') || req.header('X-Hostname') || (hasBearer ? hostFromOrigin(req) : '');
 
   const missing = [
     !tenantId ? 'X-Tenant-ID' : null,
-    !apiKey ? 'X-APIKEY' : null,
+    !apiKey && !hasBearer ? 'X-APIKEY' : null,
     !callerHostname ? 'X-Hostname' : null,
   ].filter(Boolean) as string[];
 
@@ -119,7 +135,7 @@ async function initTenantContext(req: Request, _res: Response, next: NextFunctio
   (req as any).validateToken = async (token?: string) => {
     const t = token || authHeader;
     if (!t) throw new Error('No Authorization token provided');
-    return authClient.validateToken(t, callerHostname);
+    return authClient.validateToken(t, callerHostname, tenantId);
   };
 
   next();

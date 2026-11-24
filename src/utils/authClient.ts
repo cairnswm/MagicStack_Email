@@ -33,9 +33,9 @@ export interface TenantResponse {
   settings: Record<string, any>;
 }
 
-export async function validateToken(bearerToken: string, hostname: string): Promise<any> {
+export async function validateToken(bearerToken: string, hostname: string, tenantId?: string): Promise<any> {
   if (!AUTH_API) throw new Error('MAGICSTACK_AUTH_API is not configured');
-  const url = `${AUTH_API.replace(/\/$/, '')}/validate`;
+  const url = `${AUTH_API.replace(/\/$/, '')}/validate-api`;
 
   const fetchFn = getFetch();
 
@@ -45,6 +45,7 @@ export async function validateToken(bearerToken: string, hostname: string): Prom
       Authorization: bearerToken,
       Accept: 'application/json',
       'X-Hostname': hostname,
+      ...(tenantId ? { 'X-Tenant-ID': tenantId } : {}),
     },
   });
 
