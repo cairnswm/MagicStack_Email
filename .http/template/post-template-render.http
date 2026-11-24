@@ -4,9 +4,9 @@
 # 1) Run "Create complex invoice template" once.
 # 2) Run render requests by slug or inline template.
 
-@baseUrl = http://localhost:3076
+@baseUrl = http://localhost:{{$dotenv PORT}}
 @prodUrl = https://email.magicrunez.com
-@tenantId = f63421a5-f5b2-11f0-937d-1a220d8ac2c9
+@tenantId = {{$dotenv TENANT_ID}}
 @apiKey = your-api-key
 @hostname = localhost
 @templateSlug = invoice-order-email

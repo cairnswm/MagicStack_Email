@@ -2,8 +2,8 @@
 # Description: Updates one or more fields of an existing template for the tenant.
 # All body fields are optional; at least one must be provided.
 
-@baseUrl = http://localhost:3097
-@tenantId = f63421a5-f5b2-11f0-937d-1a220d8ac2c9
+@baseUrl = http://localhost:{{$dotenv PORT}}
+@tenantId = {{$dotenv TENANT_ID}}
 @apiKey = your-api-key
 @hostname = localhost
 @templateCode = welcome-email

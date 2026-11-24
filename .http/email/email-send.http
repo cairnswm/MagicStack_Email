@@ -1,7 +1,7 @@
 ### Variables
-@baseUrl = http://localhost:3076
+@baseUrl = http://localhost:{{$dotenv PORT}}
 @prodUrl = https://email.magicrunez.com
-@tenantId = 3515ce3b-164d-11f1-946d-fe88d4cc3569
+@tenantId = {{$dotenv TENANT_ID}}
 @apiKey = eff66794-6800-11f1-8237-00505661e513
 @hostname = localhost
 

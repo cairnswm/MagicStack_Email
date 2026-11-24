@@ -2,8 +2,8 @@
 # Purpose: Exercise template rendering and sending with realistic person-focused data.
 # Assumes template code "test" already exists and is active for this tenant.
 
-@baseUrl = http://localhost:3076
-@tenantId = ecc8f32a-7c21-11f1-9b18-00505661e513
+@baseUrl = http://localhost:{{$dotenv PORT}}
+@tenantId = {{$dotenv TENANT_ID}}
 @apiKey = 18e42bf4-80d6-11f1-9b18-00505661e513
 @hostname = localhost
 @templateCode = test

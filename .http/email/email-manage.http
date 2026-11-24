@@ -1,9 +1,12 @@
 ### Variables
-@baseUrl = http://localhost:3076
-@tenantId = 523789bc-67a6-11f1-8237-00505661e513
+@baseUrl = http://localhost:{{$dotenv PORT}}
+@tenantId = {{$dotenv TENANT_ID}}
 @apiKey = your-api-key-here
 @hostname = localhost
 @templateCode = welcome-email
+@firstName = John
+@activationLink = http://localhost:{$dotenv PORT}}/activate?token=sample-token
+@expiryHours = 24
 
 # ─────────────────────────────────────────────
 # GET /template  —  List templates

@@ -1,9 +1,13 @@
 # Get all properties for a tenant
 # Description: Returns all properties for the tenant. Tenant id may be provided via `X-Tenant-ID` header or `?tenantId=` query.
 
+@baseUrl = http://localhost:{{$dotenv PORT}}
+@tenantId = {{$dotenv TENANT_ID}}
+@bearerToken = {{$dotenv TEST_BEARER_TOKEN}}
+
 # Alternative using header
 ### Get all properties (header)
-GET http://localhost:3076/tenant/property
-X-Tenant-ID: d2c5b2f0-f5c7-11f0-937d-1a220d8ac2c9
+GET {{baseUrl}}/tenant/property
+X-Tenant-ID: {{tenantId}}
 Accept: application/json
-Authorization: Bearer eyJ..._Q5o
+Authorization: Bearer {{bearerToken}}

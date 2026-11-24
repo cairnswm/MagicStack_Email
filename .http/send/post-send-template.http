@@ -3,8 +3,8 @@
 # from the parameters map, and sends the email.
 # Creates email, email_recipient, email_template_render, and email_event records.
 
-@baseUrl = http://localhost:3097
-@tenantId = f63421a5-f5b2-11f0-937d-1a220d8ac2c9
+@baseUrl = http://localhost:{{$dotenv PORT}}
+@tenantId = {{$dotenv TENANT_ID}}
 @apiKey = your-api-key
 @hostname = localhost
 @templateCode = welcome-email

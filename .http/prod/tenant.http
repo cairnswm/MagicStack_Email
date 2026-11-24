@@ -1,4 +1,4 @@
-@tenantId = 523789bc-67a6-11f1-8237-00505661e513
+@tenantId = {{$dotenv TENANT_ID}}
 
 
 ###

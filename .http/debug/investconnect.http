@@ -1,8 +1,11 @@
+@baseUrl = http://localhost:{{$dotenv PORT}}
+@tenantId = {{$dotenv TENANT_ID}}
+
 ### new email system testing.
 
-POST http://localhost:3076/send/invite
+POST {{baseUrl}}/send/invite
 Content-Type: application/json
-X-Tenant-ID: e09abd51-1160-11f1-b150-fe88d4cc3569
+X-Tenant-ID: {{tenantId}}
 X-APIKEY: 7b340930-a519-11f1-95f7-00505661e513
 X-Hostname: localhost
 

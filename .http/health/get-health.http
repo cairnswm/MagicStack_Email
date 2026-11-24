@@ -1,7 +1,10 @@
-GET http://localhost:3076/health
+@baseUrl = http://localhost:{{$dotenv PORT}}
 
 ###
-GET http://localhost:3076/health/db
+GET {{baseUrl}}/health
 
 ###
-GET http://localhost:3076/health/services
+GET {{baseUrl}}/health/db
+
+###
+GET {{baseUrl}}/health/services

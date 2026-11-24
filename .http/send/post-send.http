@@ -3,8 +3,8 @@
 # Creates email, email_recipient, email_attachment, email_image, and email_event records.
 # Delivers synchronously or queues based on tenant email_delivery_mode property.
 
-@baseUrl = http://localhost:3097
-@tenantId = f63421a5-f5b2-11f0-937d-1a220d8ac2c9
+@baseUrl = http://localhost:{{$dotenv PORT}}
+@tenantId = {{$dotenv TENANT_ID}}
 @apiKey = your-api-key
 @hostname = localhost
 
