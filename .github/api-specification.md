@@ -16,6 +16,31 @@ x-tenant-id, x-apikey and the x-hostname are all required when getSecretByName o
 
 ---
 
+# Template part management
+
+These endpoints require the common headers and a bearer token with the Admin
+or Email Controller role. All parts are tenant-scoped.
+
+| Method and path | Description |
+|---|---|
+| `GET /template-parts` | List parts, including inactive parts, in `data.parts`. |
+| `GET /template-parts/{code}` | Get a part including content and timestamps. |
+| `POST /template-parts` | Create a part; returns its `id` and `code` with status 201. |
+| `PUT /template-parts/{code}` | Update the supplied fields. |
+| `DELETE /template-parts/{code}` | Mark a part inactive. |
+
+Creation accepts `code`, `name`, `contentTemplate`, and optional `description`.
+`code` is unique per tenant, 1–100 characters, and cannot contain whitespace,
+braces, `/`, or `?`, or be `.` or `..`. `name` must be nonblank and at most
+255 characters. `contentTemplate` is a string and may be empty; `description`
+may be a string or null. Updates accept any of `name`, `description`,
+`contentTemplate`, and boolean `isActive`. Set `isActive` to true to restore
+a deleted part. Active parts can be rendered using `{{part.code}}`; inactive
+parts are treated as missing. Duplicate codes return 409, unknown codes return
+404, and invalid input returns 400.
+
+---
+
 # Shared Types
 
 ```ts

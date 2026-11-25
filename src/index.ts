@@ -13,6 +13,7 @@ import docsEmailTemplatesRouter from './routes/docsEmailTemplates';
 import docsEmailLogsRouter from './routes/docsEmailLogs';
 import sendRouter from './routes/send';
 import templateRouter from './routes/template';
+import templatePartsRouter from './routes/templateParts';
 import logsRouter from './routes/logs';
 
 const app = express();
@@ -75,6 +76,7 @@ app.use(`${BASE_PATH}/tenant`, tenantRouter);
 app.use(`${BASE_PATH}/sample`, sampleRouter);
 app.use(`${BASE_PATH}/send`, sendRouter);
 app.use(`${BASE_PATH}/template`, requireEmailAdmin as any, templateRouter);
+app.use(`${BASE_PATH}/template-parts`, requireEmailAdmin as any, templatePartsRouter);
 app.use(`${BASE_PATH}/logs`, requireEmailAdmin as any, logsRouter);
 app.use(BASE_PATH || '/', docsRouter);
 app.use(`${BASE_PATH}/docs/config`, docsEmailConfigRouter);

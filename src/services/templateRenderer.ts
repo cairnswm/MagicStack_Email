@@ -116,7 +116,9 @@ function renderFallbackExpression(expression: string | undefined, ctx: RenderCon
 }
 
 function renderTemplatePart(partCode: string, fallbackExpression: string | undefined, ctx: RenderContext, options: Required<RenderTemplateOptions>): string {
-  const partTemplate = options.templateParts[partCode];
+  const partTemplate = Object.prototype.hasOwnProperty.call(options.templateParts, partCode)
+    ? options.templateParts[partCode]
+    : undefined;
 
   if (partTemplate === undefined) {
     if (fallbackExpression) {

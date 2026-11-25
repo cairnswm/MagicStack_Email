@@ -7,7 +7,7 @@ export async function loadActiveTemplateParts(conn: any, tenantId: string): Prom
   );
 
   const rows = result as any[];
-  const parts: TemplatePartMap = {};
+  const parts: TemplatePartMap = Object.create(null);
 
   for (const row of rows) {
     parts[String(row.code)] = String(row.content_template ?? '');

@@ -1,0 +1,68 @@
+@baseUrl = http://localhost:{{$dotenv PORT}}
+@tenantId = {{$dotenv TENANT_ID}}
+@apiKey = your-api-key
+@hostname = localhost
+@adminToken = your-admin-token
+@code = header
+
+### Create a part
+POST {{baseUrl}}/template-parts
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "code": "{{code}}",
+  "name": "Email header",
+  "description": "Reusable greeting",
+  "contentTemplate": "<p>Hello {{customer.first_name}}</p>"
+}
+
+### List parts, including inactive parts
+GET {{baseUrl}}/template-parts
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+Authorization: Bearer {{adminToken}}
+
+### Get a part
+GET {{baseUrl}}/template-parts/{{code}}
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+Authorization: Bearer {{adminToken}}
+
+### Update or reactivate a part
+PUT {{baseUrl}}/template-parts/{{code}}
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "contentTemplate": "<p>Welcome {{customer.first_name}}</p>",
+  "isActive": true
+}
+
+### Deactivate a part
+DELETE {{baseUrl}}/template-parts/{{code}}
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+Authorization: Bearer {{adminToken}}
+
+### Preview an included part
+POST {{baseUrl}}/template/render
+Content-Type: application/json
+X-Tenant-ID: {{tenantId}}
+X-APIKEY: {{apiKey}}
+X-Hostname: {{hostname}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "template": "{{part.header}}",
+  "data": { "customer": { "first_name": "Amina" } }
+}

@@ -79,6 +79,9 @@ Use a tenant-scoped template part to include reusable content:
 {{part.header}}
 ```
 
+Manage parts through the administrator-protected `/template-parts` endpoints;
+see the [endpoint reference](api-specification.md#template-part-management).
+
 Parts are rendered as template content, so a part may contain its own placeholders, `if` blocks, and `each` blocks.
 
 If the part does not exist or is inactive, it renders as empty output.
